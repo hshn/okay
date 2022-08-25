@@ -16,12 +16,12 @@ class ValidationSpec extends FunSuite {
   }
 
   test("product() can make validation for a case class") {
-
-    implicit val childValidation: Validation[Violation, Dirty.Child, Clean.Child] = Validation.forProduct[Violation, Dirty.Child](
-      _.map(_.name).as[String].at("name"),
-    ) { name =>
-      Clean.Child(name = name)
-    }
+    implicit val childValidation: Validation[Violation, Dirty.Child, Clean.Child] =
+      Validation.forProduct[Violation, Dirty.Child](
+        _.map(_.name).as[String].at("name"),
+      ) { name =>
+        Clean.Child(name = name)
+      }
 
     val validation = Validation
       .forProduct[Violation, Dirty](
@@ -33,29 +33,44 @@ class ValidationSpec extends FunSuite {
         Clean(a1 = a1, a2 = a2, a3 = a3, a4 = a4)
       }
 
-    assertEquals(
-      validation.validate(
-        Dirty(
-          a1 = None,
-          a2 = "yay",
-          a3 = List(
-            Dirty.Child(name = "0".some),
-            Dirty.Child(name = None),
-            Dirty.Child(name = "2".some),
-            Dirty.Child(name = "3".some),
-            Dirty.Child(name = None),
-            Dirty.Child(name = "5".some),
-          ),
-          a4 = Map(
-            "a" -> Dirty.Child(name = None),
-            "b" -> Dirty.Child(name = "1".some),
-            "c" -> Dirty.Child(name = None),
-            "d" -> Dirty.Child(name = None),
-            "e" -> Dirty.Child(name = "4".some),
-            "f" -> Dirty.Child(name = None),
-          ),
-        ),
+    val invalid = Dirty(
+      a1 = None,
+      a2 = "yay",
+      a3 = List(
+        Dirty.Child(name = "0".some),
+        Dirty.Child(name = None),
+        Dirty.Child(name = "2".some),
+        Dirty.Child(name = "3".some),
+        Dirty.Child(name = None),
+        Dirty.Child(name = "5".some),
       ),
+      a4 = Map(
+        "a" -> Dirty.Child(name = None),
+        "b" -> Dirty.Child(name = "1".some),
+        "c" -> Dirty.Child(name = None),
+        "d" -> Dirty.Child(name = None),
+        "e" -> Dirty.Child(name = "4".some),
+        "f" -> Dirty.Child(name = None),
+      ),
+    )
+
+    val valid = Dirty(
+      a1 = "hi".some,
+      a2 = "123",
+      a3 = List(
+        Dirty.Child(name = "0".some),
+        Dirty.Child(name = "2".some),
+        Dirty.Child(name = "3".some),
+        Dirty.Child(name = "5".some),
+      ),
+      a4 = Map(
+        "b" -> Dirty.Child(name = "1".some),
+        "e" -> Dirty.Child(name = "4".some),
+      ),
+    )
+
+    assertEquals(
+      validation.validate(invalid),
       Violations[Violation](
         children = Map(
           Path("a1") -> Violations(Violation.Required :: Nil),
@@ -76,6 +91,24 @@ class ValidationSpec extends FunSuite {
           ),
         ),
       ).asLeft,
+    )
+
+    assertEquals(
+      validation.validate(valid),
+      Clean(
+        a1 = "hi",
+        a2 = 123,
+        a3 = List(
+          Clean.Child(name = "0"),
+          Clean.Child(name = "2"),
+          Clean.Child(name = "3"),
+          Clean.Child(name = "5"),
+        ),
+        a4 = Map(
+          "b" -> Clean.Child(name = "1"),
+          "e" -> Clean.Child(name = "4"),
+        ),
+      ).asRight,
     )
   }
 }
