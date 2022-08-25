@@ -126,4 +126,19 @@ trait ValidationInstances {
         .sequence
         .leftMap(_.combineAll).toEither
     }
+
+  implicit def stringMapValidation[V, A, B](implicit validation: Validation[V, A, B]): Validation[V, Map[String, A], Map[String, B]] =
+    Validation.instance { values =>
+      values
+        .map { case (key, a) =>
+          validation
+            .at(key).validate(a)
+            .map(b => key -> b)
+            .toValidatedNec
+        }
+        .toList
+        .sequence
+        .map(_.toMap)
+        .leftMap(_.combineAll).toEither
+    }
 }
