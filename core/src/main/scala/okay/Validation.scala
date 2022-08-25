@@ -16,12 +16,12 @@ case class Validation[V, A, B](
     }
 
   def mapViolations(f: Violations[V] => Violations[V]): Validation[V, A, B] =
-    Validation.instance[V, A, B] { a =>
+    Validation.instance[A] { a =>
       validate(a).leftMap(f)
     }
 
   def andValidate[C](f: B => Either[Violations[V], C]): Validation[V, A, C] =
-    Validation.instance[V, A, C] { a =>
+    Validation.instance[A] { a =>
       for {
         b <- validate(a)
         c <- f(b)
@@ -32,20 +32,15 @@ case class Validation[V, A, B](
 }
 
 object Validation extends ValidationInstances {
-  def instance[V, A, B](f: A => Either[Violations[V], B]): Validation[V, A, B] =
-    new Validation[V, A, B](validate = value => f(value))
-
-  def pure[V, A]: Validation[V, A, A] = instance[V, A, A](Right(_))
-
   def forProduct[V, A]: ForProductPartiallyApplied[V, A] = new ForProductPartiallyApplied[V, A]()
 
   final class ForProductPartiallyApplied[V, A](private val dummy: Boolean = true) extends AnyVal {
     def apply[A1, B](
       v1: Validation[V, A, A] => Validation[V, A, A1],
     )(g: A1 => B): Validation[V, A, B] = {
-      val product = pure[V, A]
+      val product = identity[A][V]()
 
-      Validation.instance[V, A, B] { value =>
+      Validation.instance[A] { value =>
         v1(product)
           .validate(value)
           .map(g)
@@ -55,9 +50,9 @@ object Validation extends ValidationInstances {
       v1: Validation[V, A, A] => Validation[V, A, A1],
       v2: Validation[V, A, A] => Validation[V, A, A2],
     )(g: (A1, A2) => B): Validation[V, A, B] = {
-      val product = pure[V, A]
+      val product = identity[A][V]()
 
-      Validation.instance[V, A, B] { value =>
+      Validation.instance[A] { value =>
         (
           v1(product).validate(value).toValidatedNec,
           v2(product).validate(value).toValidatedNec,
@@ -69,9 +64,9 @@ object Validation extends ValidationInstances {
       v2: Validation[V, A, A] => Validation[V, A, A2],
       v3: Validation[V, A, A] => Validation[V, A, A3],
     )(g: (A1, A2, A3) => B): Validation[V, A, B] = {
-      val product = pure[V, A]
+      val product = identity[A][V]()
 
-      Validation.instance[V, A, B] { value =>
+      Validation.instance[A] { value =>
         (
           v1(product).validate(value).toValidatedNec,
           v2(product).validate(value).toValidatedNec,
@@ -85,9 +80,9 @@ object Validation extends ValidationInstances {
       v3: Validation[V, A, A] => Validation[V, A, A3],
       v4: Validation[V, A, A] => Validation[V, A, A4],
     )(g: (A1, A2, A3, A4) => B): Validation[V, A, B] = {
-      val product = pure[V, A]
+      val product = identity[A][V]()
 
-      Validation.instance[V, A, B] { value =>
+      Validation.instance[A] { value =>
         (
           v1(product).validate(value).toValidatedNec,
           v2(product).validate(value).toValidatedNec,
@@ -98,10 +93,14 @@ object Validation extends ValidationInstances {
     }
   }
 
+  def instance[A]: InstancePartiallyApplied[A] = new InstancePartiallyApplied[A]()
   def identity[A]: IdentityPartiallyApplied[A] = new IdentityPartiallyApplied[A]()
 
+  class InstancePartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
+    def apply[V, B](f: A => Either[Violations[V], B]): Validation[V, A, B] = new Validation[V, A, B](f)
+  }
   class IdentityPartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
-    def apply[V: ViolationFactory](): Validation[V, A, A] = Validation.instance(_.asRight)
+    def apply[V](): Validation[V, A, A] = instance[A](_.asRight)
   }
 }
 
@@ -110,7 +109,7 @@ trait ValidationInstances {
     value.toRight(Violations.single[V](ViolationFactory[V].required))
   }
 
-  implicit def integerString[V: ViolationFactory]: Validation[V, String, Int] = Validation.instance { value =>
+  implicit def integerStringValidation[V: ViolationFactory]: Validation[V, String, Int] = Validation.instance { value =>
     try {
       Integer.parseInt(value).asRight
     } catch {
