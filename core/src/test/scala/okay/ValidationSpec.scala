@@ -111,6 +111,26 @@ class ValidationSpec extends FunSuite {
       ).asRight,
     )
   }
+
+  test("|+| can combine two validation horizontally") {
+    val validation = Validation.maxLength[Violation](max = 10) |+|
+      Validation.minLength(min = 20) |+|
+      Validation.minLength(min = 30) |+|
+      Validation.maxLength(max = 100)
+
+    val string = "a".repeat(15)
+
+    assertEquals(
+      validation.validate(string),
+      Violations[Violation](
+        Seq(
+          Violation.TooLongString(value = string, maxLength = 10),
+          Violation.TooShortString(value = string, minLength = 20),
+          Violation.TooShortString(value = string, minLength = 30),
+        ),
+      ).asLeft,
+    )
+  }
 }
 
 object ValidationSpec {
