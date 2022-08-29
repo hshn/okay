@@ -108,13 +108,12 @@ object Validation extends ValidationInstances {
   def instance[A]: InstancePartiallyApplied[A] = new InstancePartiallyApplied[A]()
   def identity[A]: IdentityPartiallyApplied[A] = new IdentityPartiallyApplied[A]()
 
-  class InstancePartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
+  final class InstancePartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
     def apply[V, B](f: A => Either[Violations[V], B]): Validation[V, A, B] = new Validation[V, A, B](f)
   }
-  class IdentityPartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
+  final class IdentityPartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
     def apply[V](): Validation[V, A, A] = instance[A](_.asRight)
   }
-
 
   def ensure[V, A](f: => V)(test: A => Boolean): Validation[V, A, A] =
     ensureOr[V, A](_ => f)(test)
@@ -163,19 +162,5 @@ trait ValidationInstances {
         .sequence
         .map(_.toMap)
         .leftMap(_.combineAll).toEither
-    }
-
-  def maxLength[V: ViolationFactory](max: Int): Validation[V, String, String] =
-    Validation.ensureOr[V, String] { value =>
-      ViolationFactory[V].tooLongString(value = value, max = max)
-    } { value =>
-      value.length <= max
-    }
-
-  def minLength[V: ViolationFactory](min: Int): Validation[V, String, String] =
-    Validation.ensureOr[V, String] { value =>
-      ViolationFactory[V].tooShortString(value = value, min = min)
-    } { value =>
-      min <= value.length
     }
 }

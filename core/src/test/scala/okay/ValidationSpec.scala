@@ -3,8 +3,8 @@ package okay
 import cats.implicits._
 import munit.FunSuite
 import okay.Violations.Path
-import okay.violation.Violation
-import okay.violation.implicits._
+import okay.defaults._
+import okay.defaults.Validations._
 
 class ValidationSpec extends FunSuite {
   import ValidationSpec._
@@ -113,10 +113,10 @@ class ValidationSpec extends FunSuite {
   }
 
   test("|+| can combine two validation horizontally") {
-    val validation = Validation.maxLength[Violation](max = 10) |+|
-      Validation.minLength(min = 20) |+|
-      Validation.minLength(min = 30) |+|
-      Validation.maxLength(max = 100)
+    val validation = maxLength(max = 10) |+|
+      minLength(min = 20) |+|
+      minLength(min = 30) |+|
+      maxLength(max = 100)
 
     val string = "a".repeat(15)
 
