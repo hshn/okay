@@ -10,25 +10,25 @@ class ValidationSpec extends FunSuite {
   import ValidationSpec._
 
   test("at() lifts violations at specified path") {
-    val validation = Validation.identity[Option[String]]().as[String].at("key-1")
+    val validation = Validation.okay[Option[String]].as[String]().at("key-1")
     val result     = validation.validate(None)
     assertEquals(result, Violations[Violation](Violation.Required :: Nil).asChild("key-1").asLeft)
   }
 
   test("product() can make validation for a case class") {
     implicit val childValidation: Validation[Violation, Dirty.Child, Clean.Child] =
-      Validation.forProduct[Violation, Dirty.Child](
-        _.map(_.name).as[String].at("name"),
+      Validation.forProduct[Dirty.Child](
+        _.map(_.name).as[String]().at("name"),
       ) { name =>
         Clean.Child(name = name)
       }
 
     val validation = Validation
-      .forProduct[Violation, Dirty](
-        _.map(_.a1).as[String].at("a1"),
-        _.map(_.a2).as[Int].at("a2"),
-        _.map(_.a3).as[List[Clean.Child]].at("a3"),
-        _.map(_.a4).as[Map[String, Clean.Child]].at("a4"),
+      .forProduct[Dirty](
+        _.map(_.a1).as[String]().at("a1"),
+        _.map(_.a2).as[Int]().at("a2"),
+        _.map(_.a3).as[List[Clean.Child]]().at("a3"),
+        _.map(_.a4).as[Map[String, Clean.Child]]().at("a4"),
       ) { case (a1, a2, a3, a4) =>
         Clean(a1 = a1, a2 = a2, a3 = a3, a4 = a4)
       }
