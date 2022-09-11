@@ -1,49 +1,62 @@
 package okay
 
-import cats.syntax.either._
-import munit.FunSuite
 import okay.defaults._
-import okay.defaults.Validations._
+import okay.defaults.Validations
+import zio.Scope
+import zio.test.Assertion._
+import zio.test.Spec
+import zio.test.TestEnvironment
+import zio.test.ZIOSpecDefault
+import zio.test.assertZIO
 
-class ValidationsSpec extends FunSuite {
-  test("maxLength() can test string length") {
-    val validation = maxLength(max = 4)
+class ValidationsSpec extends ZIOSpecDefault {
+  val maxLengthSuite = suite("maxLength() can test string length")(
+    test("success") {
+      val validation = Validations.maxLength(max = 4)
 
-    assertEquals(
-      validation.validate("a".repeat(5)),
-      Violations.single(Violation.TooLongString("a".repeat(5), maxLength = 4)).asLeft,
-    )
+      assertZIO(validation.run("a".repeat(4)))(equalTo("a".repeat(4)))
+    },
+    test("failure") {
+      val validation = Validations.maxLength(max = 4)
 
-    assertEquals(
-      validation.validate("a".repeat(4)),
-      "a".repeat(4).asRight,
-    )
-  }
-  test("minLength() can test string length") {
-    val validation = minLength(min = 4)
+      assertZIO(validation.run("a".repeat(5)).either)(
+        isLeft(equalTo(Violations.single(Violation.TooLongString("a".repeat(5), maxLength = 4)))),
+      )
+    },
+  )
 
-    assertEquals(
-      validation.validate("a".repeat(3)),
-      Violations.single(Violation.TooShortString("a".repeat(3), minLength = 4)).asLeft,
-    )
+  val minLengthSuite = suite("minLength() can test string length")(
+    test("success") {
+      val validation = Validations.minLength(min = 4)
 
-    assertEquals(
-      validation.validate("a".repeat(4)),
-      "a".repeat(4).asRight,
-    )
-  }
-  test("matches() can test with regex") {
-    val pattern    = "^abc$".r
-    val validation = matches(pattern)
+      assertZIO(validation.run("a".repeat(4)))(equalTo("a".repeat(4)))
+    },
+    test("failure") {
+      val validation = Validations.minLength(min = 4)
+      assertZIO(validation.run("a".repeat(3)).either)(
+        isLeft(equalTo(Violations.single(Violation.TooLongString("a".repeat(3), maxLength = 4)))),
+      )
+    },
+  )
+  val matchesSuite = suite("matches() can test with regex")(
+    test("success") {
+      val pattern    = "^abc$".r
+      val validation = Validations.matches(pattern)
 
-    assertEquals(
-      validation.validate("abcd"),
-      Violations.single(Violation.Unmatched("abcd", pattern)).asLeft,
-    )
+      assertZIO(validation.run("abcd"))(
+        equalTo("abcd"),
+      )
+    },
+    test("failure") {
+      val pattern    = "^abc$".r
+      val validation = Validations.matches(pattern)
 
-    assertEquals(
-      validation.validate("abc"),
-      "abc".asRight,
-    )
-  }
+      assertZIO(validation.run("abc"))(equalTo("abc"))
+    },
+  )
+  override def spec: Spec[TestEnvironment with Scope, Any] = suite("Validations")(
+    minLengthSuite,
+    maxLengthSuite,
+    matchesSuite,
+  )
 }

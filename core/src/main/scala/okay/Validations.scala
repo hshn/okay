@@ -1,26 +1,40 @@
 package okay
 
-import cats.syntax.either._
+import cats.implicits._
 import scala.util.matching.Regex
+import zio.ZIO
 
 trait Validations[V] {
-  def matches(pattern: Regex)(implicit VF: ViolationFactory[V]): Validation[V, String, String] =
-    Validation.instance {
-      case value @ pattern(_ @_*) => value.asRight
-      case other                  => Violations.single(VF.unmatched(value = other, pattern = pattern)).asLeft
+  def required[A](implicit VF: ViolationFactory[V]): Validation[Any, V, Option[A], A] =
+    Validation.instance[Option[A]] { maybeA =>
+      ZIO.fromEither(maybeA.toRight(Violations.single(VF.required)))
     }
 
-  def maxLength(max: Int)(implicit VF: ViolationFactory[V]): Validation[V, String, String] =
+  def matches(pattern: Regex)(implicit VF: ViolationFactory[V]): Validation[Any, V, String, String] =
+    Validation.instance[String] {
+      case value @ pattern(_ @_*) => ZIO.succeed(value)
+      case other                  => ZIO.fail(Violations.single(VF.unmatched(value = other, pattern = pattern)))
+    }
+
+  def maxLength(max: Int)(implicit VF: ViolationFactory[V]): Validation[Any, V, String, String] =
     Validation.ensureOr[V, String] { value =>
-      VF.tooLongString(value = value, max = max)
+      VF.tooLongString(value, max)
     } { value =>
       value.length <= max
     }
 
-  def minLength(min: Int)(implicit VF: ViolationFactory[V]): Validation[V, String, String] =
+  def minLength(min: Int)(implicit VF: ViolationFactory[V]): Validation[Any, V, String, String] =
     Validation.ensureOr[V, String] { value =>
-      VF.tooShortString(value = value, min = min)
+      VF.tooShortString(value, min)
     } { value =>
-      min <= value.length
+      value.length >= min
     }
+
+  def as[C] = new Validations.AsPartiallyApplied[V, C]
+}
+
+object Validations {
+  final class AsPartiallyApplied[V, C] {
+    def apply[R, B]()(implicit validation: Validation[R, V, B, C]): Validation[R, V, B, C] = validation
+  }
 }

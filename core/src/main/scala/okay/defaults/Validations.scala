@@ -1,3 +1,3 @@
 package okay.defaults
 
-object Validations extends okay.Validations[Violation]
+object Validations extends okay.Validations[Violation] {}
