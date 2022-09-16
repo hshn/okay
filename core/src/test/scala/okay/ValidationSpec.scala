@@ -35,6 +35,26 @@ object ValidationSpec extends ZIOSpecDefault {
       )
     }
 
+  val suiteCombine = suite("|+|")(
+    test("result violations when invalid") {
+      val validation = Validations.minLength(3) |+| Validations.maxLength(1)
+      val expectedViolations = Violations(
+        Seq(
+          Violation.TooShortString("ab", 3),
+          Violation.TooLongString("ab", 1),
+        ),
+      )
+
+      assertZIO(validation.run("ab").either)(isLeft(equalTo(expectedViolations)))
+    },
+    test("result value when valid") {
+      val validation = (Validations.minLength(1) |+| Validations.maxLength(2))
+        .map(_.length)
+
+      assertZIO(validation.run("ab"))(equalTo(2))
+    },
+  )
+
   val suiteForProduct = suite("forProduct()")(
     test("result violations when invalid") {
       val invalid = Dirty(
@@ -120,6 +140,7 @@ object ValidationSpec extends ZIOSpecDefault {
   )
 
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("ZValidation")(
+    suiteCombine,
     suiteForProduct,
   )
 
