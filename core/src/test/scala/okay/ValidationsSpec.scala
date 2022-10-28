@@ -9,7 +9,7 @@ import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
 import zio.test.assertZIO
 
-class ValidationsSpec extends ZIOSpecDefault {
+object ValidationsSpec extends ZIOSpecDefault {
   val maxLengthSuite = suite("maxLength() can test string length")(
     test("success") {
       val validation = Validations.maxLength(max = 4)

@@ -7,7 +7,7 @@ import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
 
-class ViolationsSpec extends ZIOSpecDefault {
+object ViolationsSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("Violations")(
     test("++ merges two Violations recursively") {
       val a = Violations(
