@@ -1,4 +1,12 @@
 ThisBuild / scalaVersion := "2.13.8"
+ThisBuild / scalacOptions ++= Seq(
+  "-encoding",
+  "utf8",
+  "-Xfatal-warnings",
+  "-deprecation",
+  "-unchecked",
+  "-feature",
+)
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -24,4 +32,17 @@ lazy val core = (project in file("core"))
       "dev.zio"       %% "zio-test-magnolia" % "2.0.2" % Test,
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    Compile / sourceGenerators += task[Seq[File]] {
+      val directory = (Compile / sourceManaged).value / "okay" / "syntax"
+
+      val source = TupleOperationGenerator.generateZValidatedSyntax
+      val file   = directory / s"TupleZValidationSyntax.scala"
+
+      IO.write(
+        file,
+        source,
+      )
+
+      file :: Nil
+    },
   )

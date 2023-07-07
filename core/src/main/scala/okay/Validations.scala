@@ -1,6 +1,5 @@
 package okay
 
-import cats.implicits._
 import scala.util.matching.Regex
 import zio.ZIO
 
