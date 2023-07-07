@@ -26,9 +26,10 @@ case class Violations[+V](
 object Violations {
   def single[V](value: V): Violations[V] = new Violations[V](value :: Nil)
 
-  def Empty[V]: Violations[V] = Violations[V]()
+  private val _empty          = Violations[Nothing]()
+  def empty[V]: Violations[V] = _empty
 
-  implicit def monoid[V]: Monoid[Violations[V]] = Monoid.instance(Empty, { _ ++ _ })
+  implicit def monoid[V]: Monoid[Violations[V]] = Monoid.instance(empty, { _ ++ _ })
 
   sealed trait Path extends Product with Serializable
   object Path {

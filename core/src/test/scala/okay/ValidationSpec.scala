@@ -4,7 +4,6 @@ import cats.implicits._
 import okay.Validation._
 import okay.Violations.Path
 import okay.defaults._
-import okay.defaults.Validations._
 import zio.Scope
 import zio.test.Assertion._
 import zio.test.Spec
@@ -14,26 +13,31 @@ import zio.test.assertZIO
 
 object ValidationSpec extends ZIOSpecDefault {
   implicit val childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
-    Validation.forProduct[Dirty.Child](
-      _.map(_.name) >> required at "name",
-    ) { name =>
-      Clean.Child(name = name)
+    Validation.instance[Dirty.Child] { dirty =>
+      (
+        dirty.name.validateAs[String] at "name"
+      ).validateN { name =>
+        Clean.Child(name = name)
+      }
     }
 
-  val validation: Validation[Any, Violation, Dirty, Clean] =
-    Validation.forProduct[Dirty](
-      _.map(_.a1) >> required at "a1",
-      _.map(_.a2) >> as[Int]() at "a2",
-      _.map(_.a3) >> as[List[Clean.Child]]() at "a3",
-      _.map(_.a4) >> as[Map[String, Clean.Child]]() at "a4",
-    ) { case (a1, a2, a3, a4) =>
-      Clean(
-        a1 = a1,
-        a2 = a2,
-        a3 = a3,
-        a4 = a4,
-      )
+  val validation: Validation[Any, Violation, Dirty, Clean] = {
+    Validation.instance[Dirty] { dirty =>
+      (
+        dirty.a1.validateAs[String].at("a1"),
+        dirty.a2.validateAs[Int].at("a2"),
+        dirty.a3.validateAs[List[Clean.Child]].at("a3"),
+        dirty.a4.validateAs[Map[String, Clean.Child]].at("a4"),
+      ).validateN { case (a1, a2, a3, a4) =>
+        Clean(
+          a1 = a1,
+          a2 = a2,
+          a3 = a3,
+          a4 = a4,
+        )
+      }
     }
+  }
 
   val suiteCombine = suite("|+|")(
     test("result violations when invalid") {
