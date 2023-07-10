@@ -27,7 +27,7 @@ lazy val core = (project in file("core"))
       "org.typelevel" %% "cats-core"         % "2.9.0",
       "dev.zio"       %% "zio"               % "2.0.2",
       "dev.zio"       %% "zio-prelude"       % "1.0.0-RC16",
-      "dev.zio"       %% "zio-test"          % "2.0.2" % Test,
+      "dev.zio"       %% "zio-test"          % "2.0.15" % Test,
       "dev.zio"       %% "zio-test-sbt"      % "2.0.15" % Test,
       "dev.zio"       %% "zio-test-magnolia" % "2.0.2" % Test,
     ),
