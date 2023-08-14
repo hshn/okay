@@ -27,7 +27,7 @@ lazy val core = (project in file("core"))
       val zio = "2.0.15"
 
       Seq(
-        "org.typelevel" %% "cats-core"         % "2.9.0",
+        "org.typelevel" %% "cats-core"         % "2.10.0",
         "dev.zio"       %% "zio"               % zio,
         "dev.zio"       %% "zio-prelude"       % "1.0.0-RC19",
         "dev.zio"       %% "zio-test"          % zio % Test,
