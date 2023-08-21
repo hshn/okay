@@ -24,7 +24,7 @@ lazy val root = (project in file("."))
 lazy val core = (project in file("core"))
   .settings(
     libraryDependencies ++= {
-      val zio = "2.0.15"
+      val zio = "2.0.16"
 
       Seq(
         "org.typelevel" %% "cats-core"         % "2.9.0",
