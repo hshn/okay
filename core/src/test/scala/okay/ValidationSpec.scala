@@ -1,18 +1,19 @@
 package okay
 
-import cats.implicits._
-import okay.Validation._
+import cats.syntax.all.*
+import okay.Validation.*
 import okay.Violations.Path
-import okay.defaults._
+import okay.defaults.{given, *}
+import scala.language.implicitConversions
 import zio.Scope
-import zio.test.Assertion._
+import zio.test.Assertion.*
 import zio.test.Spec
 import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
 import zio.test.assertZIO
 
 object ValidationSpec extends ZIOSpecDefault {
-  implicit val childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
+  given childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
     Validation.instance[Dirty.Child] { dirty =>
       (
         dirty.name.validateAs[String] at "name"

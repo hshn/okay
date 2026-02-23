@@ -1,6 +1,7 @@
 package okay
 
-import cats.implicits._
+import cats.syntax.all.*
+import scala.language.implicitConversions
 import zio.ZIO
 
 class Validation[-R, +V, -A, +B](
@@ -62,12 +63,12 @@ object Validation extends ValidationInstances {
 
 trait ValidationInstances {
 
-  implicit def optionCanBeDefined[V: ViolationFactory, A]: Validation[Any, V, Option[A], A] =
+  given optionCanBeDefined[V: ViolationFactory, A]: Validation[Any, V, Option[A], A] =
     Validation.instance { value =>
       ZIO.fromEither(value.toRight(Violations.single[V](ViolationFactory[V].required)))
     }
 
-  implicit def stringCanBeInt[V: ViolationFactory]: Validation[Any, V, String, Int] =
+  given stringCanBeInt[V: ViolationFactory]: Validation[Any, V, String, Int] =
     Validation.instance { value =>
       ZIO
         .attempt(Integer.parseInt(value))
@@ -76,7 +77,7 @@ trait ValidationInstances {
         }
     }
 
-  implicit def listCanBeValidatedAs[R, V, A, B](implicit validation: Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =
+  given listCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =
     Validation.instance { values =>
       ZIO
         .foreach(values.zipWithIndex) { case (a, index) =>
@@ -88,7 +89,7 @@ trait ValidationInstances {
         .absolve
     }
 
-  implicit def mapCanBeValidatedAs[R, V, A, B](implicit
+  given mapCanBeValidatedAs[R, V, A, B](using
     validation: Validation[R, V, A, B],
   ): Validation[R, V, Map[String, A], Map[String, B]] =
     Validation.instance { values =>

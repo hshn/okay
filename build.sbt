@@ -1,16 +1,16 @@
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / scalacOptions ++= Seq(
   "-encoding",
   "utf8",
-  "-Xfatal-warnings",
   "-deprecation",
   "-unchecked",
   "-feature",
+  "-Werror",
 )
 
-Global / onChangedBuildSource := ReloadOnSourceChanges
+ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
-lazy val root = (project in file("."))
+lazy val root = (project in file(".") withId "okay")
   .settings(
     Compile / unmanagedSourceDirectories   := Nil,
     Compile / unmanagedResourceDirectories := Nil,
@@ -35,7 +35,6 @@ lazy val core = (project in file("core"))
         "dev.zio"       %% "zio-test-magnolia" % zio % Test,
       )
     },
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     Compile / sourceGenerators += task[Seq[File]] {
       val directory = (Compile / sourceManaged).value / "okay" / "syntax"
 

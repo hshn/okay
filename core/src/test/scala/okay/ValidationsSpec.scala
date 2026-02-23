@@ -1,9 +1,9 @@
 package okay
 
-import okay.defaults._
+import okay.defaults.{given, *}
 import okay.defaults.Validations
 import zio.Scope
-import zio.test.Assertion._
+import zio.test.Assertion.*
 import zio.test.Spec
 import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault

@@ -11,5 +11,5 @@ trait ViolationFactory[A] {
 }
 
 object ViolationFactory {
-  def apply[A](implicit ev: ViolationFactory[A]): ViolationFactory[A] = ev
+  def apply[A](using ev: ViolationFactory[A]): ViolationFactory[A] = ev
 }

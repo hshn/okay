@@ -7,16 +7,12 @@ object TupleOperationGenerator {
 
     s"""package okay.syntax
        |
-       |import cats.implicits._
-       |import okay._
-       |import scala.language.implicitConversions
-       |import zio._
+       |import cats.syntax.all.*
+       |import okay.*
+       |import zio.*
        |
-       |trait TupleZValidatedSyntax {
-       |${gens.map(_.syntax).mkString("\n")}
-       |}
-       |
-       |${gens.map(_.operation).mkString("\n")}
+       |trait TupleZValidatedSyntax:
+       |${gens.map(_.extension).mkString("\n")}
        |""".stripMargin
   }
 
@@ -24,8 +20,6 @@ object TupleOperationGenerator {
     val ns          = 1 to n
     val resultTypes = ns.map(n => s"B$n")
     val inputTypes  = resultTypes.map(t => s"ZIO[R, Violations[V], $t]")
-
-    val operationClassName = s"Tuple${n}ZValidatedOps"
 
     val lookupValidationN: Int => String =
       if (n == 1) { _ => "validations" }
@@ -39,29 +33,16 @@ object TupleOperationGenerator {
       if (n == 1) "map"
       else "mapN"
 
-    def operation: String = {
-      s"""final class $operationClassName[-R, +V, ${resultTypes.mkString(", ")}](
-         |  private val validations: (
-         |${inputTypes.map(t => s"    $t").mkString(",\n")}
-         |  ),
-         |) {
-         |  def validateN[A](f: (${resultTypes.mkString(", ")}) => A): ZIO[R, Violations[V], A] = {
-         |    (for {
-         |${ns.map { n => s"      result$n <- validations${tupleN(n)}.either.map(_.toValidatedNec)" }.mkString("\n")}
-         |    } yield (
-         |${ns.map { n => s"      result$n" }.mkString(",\n")}
-         |    ).$mapN(f).leftMap(_.combineAll).toEither).absolve
-         |  }
-         |}
-         |""".stripMargin
-    }
-
-    def syntax: String = {
-      s"""  implicit def syntaxZValidatedOps$n[R, V, ${resultTypes.mkString(", ")}](
-         |    value: (
-         |${inputTypes.map(t => s"      $t").mkString(",\n")}
-         |    ),
-         |  ): $operationClassName[R, V, ${resultTypes.mkString(", ")}] = new $operationClassName(value)
+    def extension: String = {
+      s"""  extension [R, V, ${resultTypes.mkString(", ")}](validations: (
+         |${inputTypes.map(t => s"    $t,").mkString("\n")}
+         |  ))
+         |    def validateN[A](f: (${resultTypes.mkString(", ")}) => A): ZIO[R, Violations[V], A] =
+         |      (for {
+         |${ns.map { n => s"        result$n <- validations${tupleN(n)}.either.map(_.toValidatedNec)" }.mkString("\n")}
+         |      } yield (
+         |${ns.map { n => s"        result$n" }.mkString(",\n")}
+         |      ).$mapN(f).leftMap(_.combineAll).toEither).absolve
          |""".stripMargin
     }
   }
