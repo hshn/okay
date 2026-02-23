@@ -10,8 +10,12 @@
     },
     {
       "matchUpdateTypes": ["minor"],
-      "matchCurrentVersion": ">=1.0.0",
       "automerge": true
+    },
+    {
+      "matchCurrentVersion": "< 1.0.0",
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
     },
     {
       "matchPackageNames": [
