@@ -35,17 +35,4 @@ lazy val core = (project in file("core"))
         "dev.zio"       %% "zio-test-magnolia" % zio % Test,
       )
     },
-    Compile / sourceGenerators += task[Seq[File]] {
-      val directory = (Compile / sourceManaged).value / "okay" / "syntax"
-
-      val source = TupleOperationGenerator.generateZValidatedSyntax
-      val file   = directory / s"TupleZValidationSyntax.scala"
-
-      IO.write(
-        file,
-        source,
-      )
-
-      file :: Nil
-    },
   )
