@@ -24,6 +24,6 @@ jobs:
       with:
         java-version: ${{ matrix.java }}
     - name: Cache scala dependencies
-      uses: coursier/cache-action@v6.4
+      uses: coursier/cache-action@v8.0
     - name: Run tests
       run: sbt test
