@@ -1,7 +1,6 @@
 package okay
 
 import cats.kernel.Monoid
-import scala.language.implicitConversions
 
 case class Violations[+V](
   values: Seq[V] = Nil,
@@ -29,7 +28,7 @@ object Violations {
   private val _empty          = Violations[Nothing]()
   def empty[V]: Violations[V] = _empty
 
-  implicit def monoid[V]: Monoid[Violations[V]] = Monoid.instance(empty, { _ ++ _ })
+  given [V]: Monoid[Violations[V]] = Monoid.instance(empty, { _ ++ _ })
 
   sealed trait Path extends Product with Serializable
   object Path {
@@ -38,7 +37,7 @@ object Violations {
     case class Key(value: String) extends Path
     case class Index(value: Int)  extends Path
 
-    implicit def stringCanBePath(value: String): Path = Path(value)
-    implicit def intCanBePath(value: Int): Path       = Path(value)
+    given Conversion[String, Path] = Path(_)
+    given Conversion[Int, Path]    = Path(_)
   }
 }
