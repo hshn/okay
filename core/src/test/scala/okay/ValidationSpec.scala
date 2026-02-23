@@ -41,7 +41,7 @@ object ValidationSpec extends ZIOSpecDefault {
 
   val suiteCombine = suite("|+|")(
     test("result violations when invalid") {
-      val validation = Validations.minLength(3) |+| Validations.maxLength(1)
+      val validation         = Validations.minLength(3) |+| Validations.maxLength(1)
       val expectedViolations = Violations(
         Seq(
           Violation.TooShortString("ab", 3),
