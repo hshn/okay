@@ -12,6 +12,15 @@
       "matchUpdateTypes": ["minor"],
       "matchCurrentVersion": ">=1.0.0",
       "automerge": true
+    },
+    {
+      "matchPackageNames": [
+        "dev.zio:zio",
+        "dev.zio:zio-test",
+        "dev.zio:zio-test-sbt",
+        "dev.zio:zio-test-magnolia"
+      ],
+      "groupName": "zio"
     }
   ]
 }
