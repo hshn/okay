@@ -21,6 +21,11 @@
         "dev.zio:zio-test-magnolia"
       ],
       "groupName": "zio"
+    },
+    {
+      "matchManagers": ["devbox"],
+      "matchPackageNames": ["sbt"],
+      "enabled": false
     }
   ]
 }
