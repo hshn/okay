@@ -31,10 +31,7 @@ class Validation[-R, +V, -A, +B](
     Validation.instance { a =>
       val lhs: ZIO[R1, Violations[V1], B1] = run(a)
       val rhs: ZIO[R1, Violations[V1], B1] = next.run(a)
-      (lhs, rhs).validateN {
-        case (b1, b2) if b1 == b2 => b1
-        case (b1, b2)             => throw new RuntimeException(s"Expected $b1 == $b2")
-      }
+      (lhs, rhs).validateN { case (b1, _) => b1 }
     }
 
   def >>[C, R1 <: R, V1 >: V](next: Validation[R1, V1, B, C]): Validation[R1, V1, A, C] =
