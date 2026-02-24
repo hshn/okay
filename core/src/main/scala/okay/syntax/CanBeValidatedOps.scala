@@ -8,3 +8,7 @@ final class ValidateAsPartiallyApplied[A, B](private val a: A) extends AnyVal:
   def apply[R, V](using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B]                     = validation.run(a)
   def at[R, V](path: Violations.Path)(using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B] =
     validation.run(a).mapError(_.asChild(path))
+  def at[R, V](key: String)(using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B] =
+    at(Violations.Path.Key(key))
+  def at[R, V](index: Int)(using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B] =
+    at(Violations.Path.Index(index))
