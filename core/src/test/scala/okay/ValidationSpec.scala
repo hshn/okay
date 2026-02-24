@@ -6,6 +6,7 @@ import okay.Violations.Path
 import okay.defaults.{given, *}
 import scala.language.implicitConversions
 import zio.Scope
+import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.Spec
 import zio.test.TestEnvironment
@@ -57,6 +58,12 @@ object ValidationSpec extends ZIOSpecDefault {
         .map(_.length)
 
       assertZIO(validation.run("ab"))(equalTo(2))
+    },
+    test("return left value when both succeed") {
+      val left: Validation[Any, Violation, String, String]  = Validation.instance[String](s => ZIO.succeed(s.toUpperCase))
+      val right: Validation[Any, Violation, String, String] = Validation.instance[String](s => ZIO.succeed(s.toLowerCase))
+
+      assertZIO((left |+| right).run("Ab"))(equalTo("AB"))
     },
   )
 
