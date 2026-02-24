@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import okay.Validation.*
 import okay.Violations.Path
 import okay.defaults.{given, *}
-import scala.language.implicitConversions
 import zio.Scope
 import zio.ZIO
 import zio.test.Assertion.*

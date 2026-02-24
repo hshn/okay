@@ -1,7 +1,6 @@
 package okay
 
 import cats.syntax.all.*
-import scala.language.implicitConversions
 import zio.ZIO
 
 class Validation[-R, +V, -A, +B](
