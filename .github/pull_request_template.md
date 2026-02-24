@@ -5,8 +5,3 @@
 ## Changes
 
 -
-
-## Checklist
-
-- [ ] Tests pass (`sbt test`)
-- [ ] No new warnings
