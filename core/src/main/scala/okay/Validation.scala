@@ -4,9 +4,9 @@ import cats.syntax.all.*
 import scala.language.implicitConversions
 import zio.ZIO
 
-class Validation[-R, +V, -A, +B](
-  val run: A => ZIO[R, Violations[V], B],
-) { self =>
+sealed abstract class Validation[-R, +V, -A, +B] { self =>
+
+  def run(a: A): ZIO[R, Violations[V], B]
 
   def map[C](f: B => C): Validation[R, V, A, C] =
     Validation.instance[A] { a =>
@@ -40,10 +40,14 @@ class Validation[-R, +V, -A, +B](
 
 object Validation extends ValidationInstances {
 
+  private final class Impl[-R, +V, -A, +B](f: A => ZIO[R, Violations[V], B]) extends Validation[R, V, A, B] {
+    def run(a: A): ZIO[R, Violations[V], B] = f(a)
+  }
+
   def instance[A] = new InstancePartiallyApplied[A]
 
   final class InstancePartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
-    def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Validation[R, V, A, B](run = f)
+    def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Impl(f)
   }
 
   def ensure[V, A](f: => V)(test: A => Boolean): Validation[Any, V, A, A] =
