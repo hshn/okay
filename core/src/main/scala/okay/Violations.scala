@@ -7,9 +7,9 @@ case class Violations[+V](
   children: Map[Violations.Path, Violations[V]] = Map.empty[Violations.Path, Violations[V]],
 ) {
   import Violations._
-  def asChild(path: Path): Violations[V]   = Violations[V](children = Map(path -> this))
-  def asChild(key: String): Violations[V]  = asChild(Path.Key(key))
-  def asChild(index: Int): Violations[V]   = asChild(Path.Index(index))
+  def asChild(path: Path): Violations[V]  = Violations[V](children = Map(path -> this))
+  def asChild(key: String): Violations[V] = asChild(Path.Key(key))
+  def asChild(index: Int): Violations[V]  = asChild(Path.Index(index))
 
   def ++[V1 >: V](other: Violations[V1]): Violations[V1] = {
     Violations[V1](
