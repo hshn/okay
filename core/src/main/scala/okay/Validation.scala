@@ -40,7 +40,7 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
 
 object Validation extends ValidationInstances {
 
-  private final class Impl[-R, +V, -A, +B](f: A => ZIO[R, Violations[V], B]) extends Validation[R, V, A, B] {
+  final private class Impl[-R, +V, -A, +B](f: A => ZIO[R, Violations[V], B]) extends Validation[R, V, A, B] {
     def run(a: A): ZIO[R, Violations[V], B] = f(a)
   }
 
