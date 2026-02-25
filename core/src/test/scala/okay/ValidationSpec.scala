@@ -181,6 +181,27 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteSucceed = suite("succeed")(
+    test("returns the input unchanged") {
+      assertZIO(Validation.succeed[String].run("hello"))(equalTo("hello"))
+    },
+    test("is right identity for >>") {
+      val v = Validations.minLength(1)
+      assertZIO((v >> Validation.succeed).run("ab"))(equalTo("ab"))
+    },
+    test("is left identity for >>") {
+      val v = Validations.minLength(1)
+      assertZIO((Validation.succeed >> v).run("ab"))(equalTo("ab"))
+    },
+  )
+
+  val suiteFail = suite("fail")(
+    test("always fails with the given violation") {
+      val v = Validation.fail[Violation](Violation.Required)
+      assertZIO(v.run("anything").either)(isLeft(equalTo(Violations.single[Violation](Violation.Required))))
+    },
+  )
+
   val suiteParallelism = suite("parallelism")(
     test("validateN runs validations in parallel") {
       for
@@ -195,6 +216,8 @@ object ValidationSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("ZValidation")(
     suiteCombine,
     suiteSequentialComposition,
+    suiteSucceed,
+    suiteFail,
     suiteForProduct,
     suiteParallelism,
   )
