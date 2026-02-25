@@ -46,6 +46,12 @@ object Validation extends ValidationInstances {
     def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Impl(f)
   }
 
+  def succeed[A]: Validation[Any, Nothing, A, A] =
+    instance[A](a => ZIO.succeed(a))
+
+  def fail[V](v: V): Validation[Any, V, Any, Nothing] =
+    instance[Any](_ => ZIO.fail(Violations.single(v)))
+
   def ensure[V, A](f: => V)(test: A => Boolean): Validation[Any, V, A, A] =
     ensureOr[V, A](_ => f)(test)
 
