@@ -4,12 +4,14 @@ import cats.syntax.all.*
 import okay.Validation.*
 import okay.Violations.Path
 import okay.defaults.{given, *}
+import zio.Promise
 import zio.Scope
 import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.Spec
 import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
+import zio.test.assertTrue
 import zio.test.assertZIO
 
 object ValidationSpec extends ZIOSpecDefault {
@@ -150,9 +152,21 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteParallelism = suite("parallelism")(
+    test("validateN runs validations in parallel") {
+      for
+        gate <- Promise.make[Nothing, Unit]
+        v1 = Validation.instance[Unit](_ => gate.await.as("v1"))
+        v2 = Validation.instance[Unit](_ => gate.succeed(()).as("v2"))
+        result <- (v1.run(()), v2.run(())).validateN { case (a, b) => (a, b) }
+      yield assertTrue(result == ("v1", "v2"))
+    },
+  )
+
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("ZValidation")(
     suiteCombine,
     suiteForProduct,
+    suiteParallelism,
   )
 
   case class Dirty(

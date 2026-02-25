@@ -28,7 +28,7 @@ object ValidateTuple:
     tail: ValidateTuple[R, V, T, TOut],
   ): ValidateTuple[R, V, ZIO[R, Violations[V], H] *: T, H *: TOut] with
     def validate(t: ZIO[R, Violations[V], H] *: T): ZIO[R, Nothing, ValidatedNec[Violations[V], H *: TOut]] =
-      for
-        headResult <- t.head.either.map(_.toValidatedNec)
-        tailResult <- tail.validate(t.tail)
-      yield (headResult, tailResult).mapN(_ *: _)
+      t.head.either
+        .map(_.toValidatedNec)
+        .zipPar(tail.validate(t.tail))
+        .map { case (headResult, tailResult) => (headResult, tailResult).mapN(_ *: _) }
