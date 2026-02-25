@@ -16,16 +16,6 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
       }
     }
 
-  def andValidate[C, R1 <: R, V1 >: V](f: B => ZIO[R1, Violations[V1], C]): Validation[R1, V1, A, C] =
-    Validation.instance[A] { a =>
-      for {
-        b <- run(a)
-        c <- f(b)
-      } yield {
-        c
-      }
-    }
-
   def |+|[R1 <: R, V1 >: V, A1 <: A, B1 >: B](next: Validation[R1, V1, A1, B1]): Validation[R1, V1, A1, B1] =
     Validation.instance { a =>
       val lhs: ZIO[R1, Violations[V1], B1] = run(a)
@@ -34,7 +24,14 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
     }
 
   def >>[C, R1 <: R, V1 >: V](next: Validation[R1, V1, B, C]): Validation[R1, V1, A, C] =
-    andValidate(b => next.run(b))
+    Validation.instance[A] { a =>
+      for {
+        b <- run(a)
+        c <- next.run(b)
+      } yield {
+        c
+      }
+    }
 }
 
 object Validation extends ValidationInstances {
