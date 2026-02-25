@@ -11,8 +11,8 @@ import zio.test.Assertion.*
 import zio.test.Spec
 import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
-import zio.test.assertZIO
 import zio.test.assertTrue
+import zio.test.assertZIO
 
 object ValidationSpec extends ZIOSpecDefault {
   given childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
