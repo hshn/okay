@@ -3,7 +3,7 @@ package okay
 import cats.kernel.Monoid
 
 case class Violations[+V](
-  values: Seq[V] = Nil,
+  values: Vector[V] = Vector.empty,
   children: Map[Violations.Path, Violations[V]] = Map.empty[Violations.Path, Violations[V]],
 ) {
   import Violations._
@@ -25,7 +25,7 @@ case class Violations[+V](
 }
 
 object Violations {
-  def single[V](value: V): Violations[V] = new Violations[V](value :: Nil)
+  def single[V](value: V): Violations[V] = new Violations[V](Vector(value))
 
   private val _empty          = Violations[Nothing]()
   def empty[V]: Violations[V] = _empty
