@@ -1,6 +1,7 @@
 package okay
 
 import cats.syntax.all.*
+import scala.util.matching.Regex
 import zio.ZIO
 
 sealed abstract class Validation[-R, +V, -A, +B] { self =>
@@ -39,7 +40,7 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
     }
 }
 
-object Validation extends ValidationInstances {
+object Validation {
 
   final private class Impl[-R, +V, -A, +B](f: A => ZIO[R, Violations[V], B]) extends Validation[R, V, A, B] {
     def run(a: A): ZIO[R, Violations[V], B] = f(a)
@@ -66,22 +67,39 @@ object Validation extends ValidationInstances {
     else
       ZIO.fail(Violations.single(f(a)))
   }
-}
 
-trait ValidationInstances {
-
-  given optionCanBeDefined[V: ViolationFactory, A]: Validation[Any, V, Option[A], A] =
-    Validation.instance { value =>
-      ZIO.fromEither(value.toRight(Violations.single[V](ViolationFactory[V].required)))
+  def required[V, A](error: => V): Validation[Any, V, Option[A], A] =
+    instance[Option[A]] { maybeA =>
+      ZIO.fromEither(maybeA.toRight(Violations.single(error)))
     }
 
-  given stringCanBeInt[V: ViolationFactory]: Validation[Any, V, String, Int] =
-    Validation.instance { value =>
+  def parseInt[V](error: String => V): Validation[Any, V, String, Int] =
+    instance[String] { value =>
       ZIO
         .attempt(Integer.parseInt(value))
         .refineOrDie { case _: NumberFormatException =>
-          Violations.single[V](ViolationFactory[V].nonInteger(value))
+          Violations.single(error(value))
         }
+    }
+
+  def maxLength[V](max: Int)(error: (String, Int) => V): Validation[Any, V, String, String] =
+    ensureOr[V, String] { value =>
+      error(value, max)
+    } { value =>
+      value.length <= max
+    }
+
+  def minLength[V](min: Int)(error: (String, Int) => V): Validation[Any, V, String, String] =
+    ensureOr[V, String] { value =>
+      error(value, min)
+    } { value =>
+      value.length >= min
+    }
+
+  def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[Any, V, String, String] =
+    instance[String] {
+      case value @ pattern(_*) => ZIO.succeed(value)
+      case other               => ZIO.fail(Violations.single(error(other, pattern)))
     }
 
   given listCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =
