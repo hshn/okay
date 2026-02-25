@@ -68,6 +68,35 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteSequentialComposition = suite(">>")(
+    test("chain two validations sequentially") {
+      val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
+      val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
+        ZIO.succeed(s.length)
+      }
+
+      assertZIO((first >> second).run("hello"))(equalTo(5))
+    },
+    test("fail on first validation") {
+      val first: Validation[Any, Violation, String, String] = Validations.minLength(10)
+      val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
+        ZIO.succeed(s.length)
+      }
+
+      assertZIO((first >> second).run("hi").either)(
+        isLeft(equalTo(Violations.single(Violation.TooShortString("hi", 10)))),
+      )
+    },
+    test("fail on second validation") {
+      val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
+      val second: Validation[Any, Violation, String, String] = Validations.maxLength(2)
+
+      assertZIO((first >> second).run("hello").either)(
+        isLeft(equalTo(Violations.single(Violation.TooLongString("hello", 2)))),
+      )
+    },
+  )
+
   val suiteForProduct = suite("forProduct()")(
     test("result violations when invalid") {
       val invalid = Dirty(
@@ -165,6 +194,7 @@ object ValidationSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("ZValidation")(
     suiteCombine,
+    suiteSequentialComposition,
     suiteForProduct,
     suiteParallelism,
   )
