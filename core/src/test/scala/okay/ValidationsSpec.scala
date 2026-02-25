@@ -10,6 +10,36 @@ import zio.test.ZIOSpecDefault
 import zio.test.assertZIO
 
 object ValidationsSpec extends ZIOSpecDefault {
+  val requiredSuite = suite("required() can extract from Option")(
+    test("success") {
+      val validation = Validations.required[String]
+
+      assertZIO(validation.run(Some("hello")))(equalTo("hello"))
+    },
+    test("failure") {
+      val validation = Validations.required[String]
+
+      assertZIO(validation.run(None).either)(
+        isLeft(equalTo(Violations.single(Violation.Required))),
+      )
+    },
+  )
+
+  val parseIntSuite = suite("parseInt() can parse string to int")(
+    test("success") {
+      val validation = Validations.parseInt
+
+      assertZIO(validation.run("42"))(equalTo(42))
+    },
+    test("failure") {
+      val validation = Validations.parseInt
+
+      assertZIO(validation.run("abc").either)(
+        isLeft(equalTo(Violations.single(Violation.NonIntegerString("abc")))),
+      )
+    },
+  )
+
   val maxLengthSuite = suite("maxLength() can test string length")(
     test("success") {
       val validation = Validations.maxLength(max = 4)
@@ -65,6 +95,8 @@ object ValidationsSpec extends ZIOSpecDefault {
     },
   )
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("Validations")(
+    requiredSuite,
+    parseIntSuite,
     minLengthSuite,
     maxLengthSuite,
     matchesSuite,

@@ -1,3 +1,4 @@
-import okay.syntax.StandardSyntax
+package okay
 
-package object okay extends StandardSyntax
+private object SyntaxExports extends syntax.StandardSyntax
+export SyntaxExports.*

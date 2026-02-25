@@ -6,7 +6,7 @@ case class Violations[+V](
   values: Vector[V] = Vector.empty,
   children: Map[Violations.Path, Violations[V]] = Map.empty[Violations.Path, Violations[V]],
 ) {
-  import Violations._
+  import Violations.*
   def asChild(path: Path): Violations[V]  = Violations[V](children = Map(path -> this))
   def asChild(key: String): Violations[V] = asChild(Path.Key(key))
   def asChild(index: Int): Violations[V]  = asChild(Path.Index(index))
@@ -32,12 +32,11 @@ object Violations {
 
   given [V]: Monoid[Violations[V]] = Monoid.instance(empty, { _ ++ _ })
 
-  sealed trait Path extends Product with Serializable
-  object Path {
-    def apply(value: String): Path = Key(value)
-    def apply(value: Int): Path    = Index(value)
-    case class Key(value: String) extends Path
-    case class Index(value: Int)  extends Path
+  enum Path:
+    case Key(value: String)
+    case Index(value: Int)
 
-  }
+  object Path:
+    def apply(value: String): Path = Path.Key(value)
+    def apply(value: Int): Path    = Path.Index(value)
 }

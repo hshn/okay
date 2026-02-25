@@ -1,5 +1,9 @@
-package okay
+package okay.defaults
 
-package object defaults {
-  given defaultViolationFactory: ViolationFactory[Violation] = new DefaultViolationFactory {}
-}
+import okay.Validation
+
+given optionCanBeDefined[A]: Validation[Any, Violation, Option[A], A] =
+  Validations.required
+
+given stringCanBeInt: Validation[Any, Violation, String, Int] =
+  Validations.parseInt
