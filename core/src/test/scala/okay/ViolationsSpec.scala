@@ -11,60 +11,60 @@ object ViolationsSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] = suite("Violations")(
     test("++ merges two Violations recursively") {
       val a = Violations(
-        values = Seq("a", "b"),
+        values = Vector("a", "b"),
         children = Map(
           Path.Key("c") -> Violations(
-            values = Seq("d"),
+            values = Vector("d"),
           ),
           Path.Key("e") -> Violations(
-            values = Seq("f"),
+            values = Vector("f"),
           ),
           Path.Index(1) -> Violations(
-            values = Seq("g"),
+            values = Vector("g"),
           ),
           Path.Index(2) -> Violations(
-            values = Seq("h"),
+            values = Vector("h"),
           ),
         ),
       )
       val b = Violations(
-        values = Seq("b", "c"),
+        values = Vector("b", "c"),
         children = Map(
           Path.Key("e") -> Violations(
-            values = Seq("f"),
+            values = Vector("f"),
           ),
           Path.Key("g") -> Violations(
-            values = Seq("h"),
+            values = Vector("h"),
           ),
           Path.Index(2) -> Violations(
-            values = Seq("i"),
+            values = Vector("i"),
           ),
           Path.Index(3) -> Violations(
-            values = Seq("j"),
+            values = Vector("j"),
           ),
         ),
       )
 
       val c = Violations(
-        values = Seq("a", "b", "b", "c"),
+        values = Vector("a", "b", "b", "c"),
         children = Map(
           Path.Key("c") -> Violations(
-            values = Seq("d"),
+            values = Vector("d"),
           ),
           Path.Key("e") -> Violations(
-            values = Seq("f", "f"),
+            values = Vector("f", "f"),
           ),
           Path.Key("g") -> Violations(
-            values = Seq("h"),
+            values = Vector("h"),
           ),
           Path.Index(1) -> Violations(
-            values = Seq("g"),
+            values = Vector("g"),
           ),
           Path.Index(2) -> Violations(
-            values = Seq("h", "i"),
+            values = Vector("h", "i"),
           ),
           Path.Index(3) -> Violations(
-            values = Seq("j"),
+            values = Vector("j"),
           ),
         ),
       )

@@ -44,7 +44,7 @@ object ValidationSpec extends ZIOSpecDefault {
     test("result violations when invalid") {
       val validation         = Validations.minLength(3) |+| Validations.maxLength(1)
       val expectedViolations = Violations(
-        Seq(
+        Vector(
           Violation.TooShortString("ab", 3),
           Violation.TooLongString("ab", 1),
         ),
@@ -91,20 +91,20 @@ object ValidationSpec extends ZIOSpecDefault {
 
       val expectedViolations = Violations[Violation](
         children = Map(
-          Path("a1") -> Violations(Violation.Required :: Nil),
-          Path("a2") -> Violations(Violation.NonIntegerString("yay") :: Nil),
+          Path("a1") -> Violations(Vector(Violation.Required)),
+          Path("a2") -> Violations(Vector(Violation.NonIntegerString("yay"))),
           Path("a3") -> Violations(
             children = Map(
-              Path(1) -> Violations(Violation.Required :: Nil).asChild("name"),
-              Path(4) -> Violations(Violation.Required :: Nil).asChild("name"),
+              Path(1) -> Violations(Vector(Violation.Required)).asChild("name"),
+              Path(4) -> Violations(Vector(Violation.Required)).asChild("name"),
             ),
           ),
           Path("a4") -> Violations(
             children = Map(
-              Path("a") -> Violations(Violation.Required :: Nil).asChild("name"),
-              Path("c") -> Violations(Violation.Required :: Nil).asChild("name"),
-              Path("d") -> Violations(Violation.Required :: Nil).asChild("name"),
-              Path("f") -> Violations(Violation.Required :: Nil).asChild("name"),
+              Path("a") -> Violations(Vector(Violation.Required)).asChild("name"),
+              Path("c") -> Violations(Vector(Violation.Required)).asChild("name"),
+              Path("d") -> Violations(Vector(Violation.Required)).asChild("name"),
+              Path("f") -> Violations(Vector(Violation.Required)).asChild("name"),
             ),
           ),
         ),
