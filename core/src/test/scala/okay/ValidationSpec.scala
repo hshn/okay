@@ -202,6 +202,23 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteContramap = suite("contramap")(
+    test("adapt input type before validation") {
+      val nonEmpty: Validation[Any, Violation, String, String]            = Validations.minLength(1)
+      val nameValidation: Validation[Any, Violation, Dirty.Child, String] = nonEmpty.contramap(_.name.getOrElse(""))
+
+      assertZIO(nameValidation.run(Dirty.Child(name = "Alice".some)))(equalTo("Alice"))
+    },
+    test("propagate violations from adapted input") {
+      val minLength3: Validation[Any, Violation, String, String]          = Validations.minLength(3)
+      val nameValidation: Validation[Any, Violation, Dirty.Child, String] = minLength3.contramap(_.name.getOrElse(""))
+
+      assertZIO(nameValidation.run(Dirty.Child(name = "ab".some)).either)(
+        isLeft(equalTo(Violations(Vector(Violation.TooShortString("ab", 3))))),
+      )
+    },
+  )
+
   val suiteParallelism = suite("parallelism")(
     test("validateN runs validations in parallel") {
       for
@@ -218,6 +235,7 @@ object ValidationSpec extends ZIOSpecDefault {
     suiteSequentialComposition,
     suiteSucceed,
     suiteFail,
+    suiteContramap,
     suiteForProduct,
     suiteParallelism,
   )
