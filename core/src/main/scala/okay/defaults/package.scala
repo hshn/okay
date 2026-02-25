@@ -1,9 +1,9 @@
-package okay
+package okay.defaults
 
-package object defaults {
-  given optionCanBeDefined[A]: Validation[Any, Violation, Option[A], A] =
-    Validations.required
+import okay.Validation
 
-  given stringCanBeInt: Validation[Any, Violation, String, Int] =
-    Validations.parseInt
-}
+given optionCanBeDefined[A]: Validation[Any, Violation, Option[A], A] =
+  Validations.required
+
+given stringCanBeInt: Validation[Any, Violation, String, Int] =
+  Validations.parseInt

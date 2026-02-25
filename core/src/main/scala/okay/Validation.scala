@@ -48,7 +48,7 @@ object Validation {
 
   def instance[A] = new InstancePartiallyApplied[A]
 
-  final class InstancePartiallyApplied[A](private val dummy: Boolean = true) extends AnyVal {
+  final class InstancePartiallyApplied[A] {
     def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Impl(f)
   }
 
