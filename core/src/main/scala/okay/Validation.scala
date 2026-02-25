@@ -97,9 +97,9 @@ object Validation {
     }
 
   def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[Any, V, String, String] =
-    instance[String] {
-      case value @ pattern(_*) => ZIO.succeed(value)
-      case other               => ZIO.fail(Violations.single(error(other, pattern)))
+    instance[String] { value =>
+      if (pattern.matches(value)) ZIO.succeed(value)
+      else ZIO.fail(Violations.single(error(value, pattern)))
     }
 
   given listCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =

@@ -21,7 +21,7 @@ object Validations {
 
   def as[C] = new AsPartiallyApplied[C]
 
-  final class AsPartiallyApplied[C] {
+  final private[defaults] class AsPartiallyApplied[C] {
     def apply[R, B]()(using validation: Validation[R, Violation, B, C]): Validation[R, Violation, B, C] = validation
   }
 }
