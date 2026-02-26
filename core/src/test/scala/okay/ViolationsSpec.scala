@@ -130,5 +130,28 @@ object ViolationsSpec extends ZIOSpecDefault {
         )
       },
     ),
+    suite("Paths#toString")(
+      test("empty paths") {
+        assertTrue(Paths.empty.toString == "")
+      },
+      test("single key") {
+        assertTrue(Paths(List(Path.Key("name"))).toString == "name")
+      },
+      test("nested keys") {
+        assertTrue(Paths(List(Path.Key("address"), Path.Key("zip"))).toString == "address.zip")
+      },
+      test("single index") {
+        assertTrue(Paths(List(Path.Index(0))).toString == "[0]")
+      },
+      test("key followed by index") {
+        assertTrue(Paths(List(Path.Key("items"), Path.Index(0))).toString == "items[0]")
+      },
+      test("key, index, key") {
+        assertTrue(Paths(List(Path.Key("items"), Path.Index(0), Path.Key("name"))).toString == "items[0].name")
+      },
+      test("index followed by key") {
+        assertTrue(Paths(List(Path.Index(0), Path.Key("name"))).toString == "[0].name")
+      },
+    ),
   )
 }

@@ -46,7 +46,16 @@ object Violations {
     def apply(value: String): Path = Path.Key(value)
     def apply(value: Int): Path    = Path.Index(value)
 
-  case class Paths(segments: List[Path])
+  case class Paths(segments: List[Path]):
+    override def toString: String =
+      segments
+        .foldLeft(StringBuilder()) {
+          case (sb, Path.Key(k)) =>
+            if sb.nonEmpty then sb.append('.')
+            sb.append(k)
+          case (sb, Path.Index(i)) => sb.append('[').append(i).append(']')
+        }
+        .result()
 
   object Paths:
     val empty: Paths = Paths(Nil)
