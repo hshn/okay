@@ -370,6 +370,38 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteOrElse = suite("orElse")(
+    test("return first result when first succeeds") {
+      val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
+      val second: Validation[Any, Violation, String, String] = Validations.minLength(5)
+
+      assertZIO(first.orElse(second).run("ab"))(equalTo("ab"))
+    },
+    test("fall back to second when first fails") {
+      val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
+      val second: Validation[Any, Violation, String, String] = Validations.minLength(1)
+
+      assertZIO(first.orElse(second).run("hello"))(equalTo("hello"))
+    },
+    test("return first violation when both fail") {
+      val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
+      val second: Validation[Any, Violation, String, String] = Validations.maxLength(1)
+
+      assertZIO(first.orElse(second).run("hello").either)(
+        isLeft(equalTo(Violations.single(Violation.TooShortString("hello", 10)))),
+      )
+    },
+    test("does not run second when first succeeds") {
+      for
+        called <- Promise.make[Nothing, Unit]
+        first  = Validation.instance[String](s => ZIO.succeed(s))
+        second = Validation.instance[String](_ => called.succeed(()) *> ZIO.succeed("fallback"))
+        result    <- first.orElse(second).run("ok")
+        wasCalled <- called.isDone
+      yield assertTrue(result == "ok", !wasCalled)
+    },
+  )
+
   val suiteParallelism = suite("parallelism")(
     test("validateN runs validations in parallel") {
       for
@@ -392,6 +424,7 @@ object ValidationSpec extends ZIOSpecDefault {
     suiteOptionCanBeValidatedAs,
     suiteSeqCanBeValidatedAs,
     suiteForProduct,
+    suiteOrElse,
     suiteParallelism,
   )
 
