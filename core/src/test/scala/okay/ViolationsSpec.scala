@@ -71,5 +71,34 @@ object ViolationsSpec extends ZIOSpecDefault {
 
       assertTrue(a ++ b == c)
     },
+    test("map transforms values") {
+      val v = Violations(values = Vector(1, 2, 3))
+      assertTrue(v.map(_ * 10) == Violations(values = Vector(10, 20, 30)))
+    },
+    test("map transforms children recursively") {
+      val v = Violations(
+        values = Vector(1),
+        children = Map(
+          Path.Key("a") -> Violations(
+            values = Vector(2),
+            children = Map(Path.Index(0) -> Violations(values = Vector(3))),
+          ),
+        ),
+      )
+      val expected = Violations(
+        values = Vector("1"),
+        children = Map(
+          Path.Key("a") -> Violations(
+            values = Vector("2"),
+            children = Map(Path.Index(0) -> Violations(values = Vector("3"))),
+          ),
+        ),
+      )
+      assertTrue(v.map(_.toString) == expected)
+    },
+    test("map on empty returns empty") {
+      val v = Violations.empty[Int]
+      assertTrue(v.map(_.toString) == Violations.empty[String])
+    },
   )
 }

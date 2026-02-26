@@ -7,6 +7,12 @@ case class Violations[+V](
   children: Map[Violations.Path, Violations[V]] = Map.empty[Violations.Path, Violations[V]],
 ) {
   import Violations.*
+  def map[V1](f: V => V1): Violations[V1] =
+    Violations[V1](
+      values = values.map(f),
+      children = children.map { case (path, child) => path -> child.map(f) },
+    )
+
   def asChild(path: Path): Violations[V]  = Violations[V](children = Map(path -> this))
   def asChild(key: String): Violations[V] = asChild(Path.Key(key))
   def asChild(index: Int): Violations[V]  = asChild(Path.Index(index))
