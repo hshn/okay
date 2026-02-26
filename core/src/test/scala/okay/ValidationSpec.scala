@@ -329,7 +329,7 @@ object ValidationSpec extends ZIOSpecDefault {
         called <- Promise.make[Nothing, Unit]
         first  = Validation.instance[String](s => ZIO.succeed(s))
         second = Validation.instance[String](_ => called.succeed(()) *> ZIO.succeed("fallback"))
-        result <- first.orElse(second).run("ok")
+        result    <- first.orElse(second).run("ok")
         wasCalled <- called.isDone
       yield assertTrue(result == "ok", !wasCalled)
     },
