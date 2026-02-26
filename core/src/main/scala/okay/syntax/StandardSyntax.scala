@@ -1,4 +1,4 @@
 package okay.syntax
 
-trait StandardSyntax extends ValidateAsSyntax, TupleZValidatedSyntax
+trait StandardSyntax  extends ValidateAsSyntax, TupleZValidatedSyntax
 object StandardSyntax extends StandardSyntax

@@ -253,19 +253,19 @@ object ValidationSpec extends ZIOSpecDefault {
   val suiteOptionCanBeValidatedAs = suite("optionCanBeValidatedAs")(
     test("derive Option validation from given") {
       given Validation[Any, Violation, String, String] = Validations.minLength(1)
-      val v = summon[Validation[Any, Violation, Option[String], Option[String]]]
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
 
       assertZIO(v.run(Some("hello")))(equalTo(Some("hello")))
     },
     test("pass through None") {
       given Validation[Any, Violation, String, String] = Validations.minLength(1)
-      val v = summon[Validation[Any, Violation, Option[String], Option[String]]]
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
 
       assertZIO(v.run(None))(equalTo(None))
     },
     test("fail when Some value is invalid") {
       given Validation[Any, Violation, String, String] = Validations.minLength(5)
-      val v = summon[Validation[Any, Violation, Option[String], Option[String]]]
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
 
       assertZIO(v.run(Some("ab")).either)(
         isLeft(equalTo(Violations.single(Violation.TooShortString("ab", 5)))),
@@ -276,19 +276,19 @@ object ValidationSpec extends ZIOSpecDefault {
   val suiteSeqCanBeValidatedAs = suite("seqCanBeValidatedAs")(
     test("validate all elements in Seq") {
       given Validation[Any, Violation, String, String] = Validations.minLength(1)
-      val v = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
 
       assertZIO(v.run(Seq("a", "bb", "ccc")))(equalTo(Seq("a", "bb", "ccc")))
     },
     test("succeed with empty Seq") {
       given Validation[Any, Violation, String, String] = Validations.minLength(1)
-      val v = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
 
       assertZIO(v.run(Seq.empty))(equalTo(Seq.empty))
     },
     test("accumulate violations with indices") {
       given Validation[Any, Violation, String, String] = Validations.minLength(3)
-      val v = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
 
       val expectedViolations = Violations[Violation](
         children = Map(
