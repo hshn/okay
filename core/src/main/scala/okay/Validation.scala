@@ -41,7 +41,9 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
 
   def orElse[R1 <: R, V1 >: V, A1 <: A, B1 >: B](that: Validation[R1, V1, A1, B1]): Validation[R1, V1, A1, B1] =
     Validation.instance[A1] { a =>
-      self.run(a).orElse(that.run(a))
+      self.run(a).catchAll { firstError =>
+        that.run(a).mapError(_ => firstError)
+      }
     }
 
   def optional: Validation[R, V, Option[A], Option[B]] =

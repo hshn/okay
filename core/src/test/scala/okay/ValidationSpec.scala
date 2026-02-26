@@ -316,12 +316,12 @@ object ValidationSpec extends ZIOSpecDefault {
 
       assertZIO(first.orElse(second).run("hello"))(equalTo("hello"))
     },
-    test("return second violation when both fail") {
+    test("return first violation when both fail") {
       val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
       val second: Validation[Any, Violation, String, String] = Validations.maxLength(1)
 
       assertZIO(first.orElse(second).run("hello").either)(
-        isLeft(equalTo(Violations.single(Violation.TooLongString("hello", 1)))),
+        isLeft(equalTo(Violations.single(Violation.TooShortString("hello", 10)))),
       )
     },
     test("does not run second when first succeeds") {
