@@ -11,10 +11,10 @@ case class Violations[+V](
   def asChild(key: String): Violations[V] = asChild(Path.Key(key))
   def asChild(index: Int): Violations[V]  = asChild(Path.Index(index))
 
-  def toList: List[(List[Path], V)] =
-    values.iterator.map(v => (Nil, v)).toList ++
+  def toList: List[(Paths, V)] =
+    values.iterator.map(v => (Paths.empty, v)).toList ++
       children.iterator.flatMap { case (path, child) =>
-        child.toList.map { case (paths, v) => (path :: paths, v) }
+        child.toList.map { case (paths, v) => (Paths(path :: paths.segments), v) }
       }
 
   def ++[V1 >: V](other: Violations[V1]): Violations[V1] = {
@@ -45,4 +45,9 @@ object Violations {
   object Path:
     def apply(value: String): Path = Path.Key(value)
     def apply(value: Int): Path    = Path.Index(value)
+
+  case class Paths(segments: List[Path])
+
+  object Paths:
+    val empty: Paths = Paths(Nil)
 }

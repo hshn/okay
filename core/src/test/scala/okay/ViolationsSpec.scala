@@ -1,6 +1,7 @@
 package okay
 
 import okay.Violations.Path
+import okay.Violations.Paths
 import zio.Scope
 import zio.test.Spec
 import zio.test.TestEnvironment
@@ -79,8 +80,8 @@ object ViolationsSpec extends ZIOSpecDefault {
         val violations = Violations(values = Vector("a", "b"))
         assertTrue(
           violations.toList == List(
-            (Nil, "a"),
-            (Nil, "b"),
+            (Paths.empty, "a"),
+            (Paths.empty, "b"),
           ),
         )
       },
@@ -92,7 +93,7 @@ object ViolationsSpec extends ZIOSpecDefault {
         )
         assertTrue(
           violations.toList == List(
-            (List(Path.Key("name")), "required"),
+            (Paths(List(Path.Key("name"))), "required"),
           ),
         )
       },
@@ -108,7 +109,7 @@ object ViolationsSpec extends ZIOSpecDefault {
         )
         assertTrue(
           violations.toList == List(
-            (List(Path.Key("address"), Path.Key("zip")), "invalid"),
+            (Paths(List(Path.Key("address"), Path.Key("zip"))), "invalid"),
           ),
         )
       },
@@ -122,9 +123,9 @@ object ViolationsSpec extends ZIOSpecDefault {
         )
         val result = violations.toList
         assertTrue(
-          result.contains((Nil, "root-error")),
-          result.contains((List(Path.Key("field")), "field-error")),
-          result.contains((List(Path.Index(0)), "index-error")),
+          result.contains((Paths.empty, "root-error")),
+          result.contains((Paths(List(Path.Key("field"))), "field-error")),
+          result.contains((Paths(List(Path.Index(0))), "index-error")),
           result.length == 3,
         )
       },
