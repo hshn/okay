@@ -8,6 +8,11 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
 
   def run(a: A): ZIO[R, Violations[V], B]
 
+  def mapError[V1](f: V => V1): Validation[R, V1, A, B] =
+    Validation.instance[A] { a =>
+      self.run(a).mapError(_.map(f))
+    }
+
   def contramap[A0](f: A0 => A): Validation[R, V, A0, B] =
     Validation.instance[A0] { a0 =>
       self.run(f(a0))

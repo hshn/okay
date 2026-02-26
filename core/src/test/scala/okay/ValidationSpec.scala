@@ -219,6 +219,73 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteMapError = suite("mapError")(
+    test("transform error type on failure") {
+      val v = Validations.minLength(3).mapError(_.toString)
+
+      assertZIO(v.run("ab").either)(
+        isLeft(equalTo(Violations.single(Violation.TooShortString("ab", 3).toString))),
+      )
+    },
+    test("preserve success value") {
+      val v = Validations.minLength(1).mapError(_.toString)
+
+      assertZIO(v.run("hello"))(equalTo("hello"))
+    },
+    test("transform nested violations preserving structure") {
+      val v = Validation
+        .instance[String] { s =>
+          ZIO.fail(
+            Violations[Violation](
+              values = Vector(Violation.Required),
+              children = Map(
+                Path("child") -> Violations.single(Violation.TooShortString(s, 3)),
+              ),
+            ),
+          )
+        }
+        .mapError(_.toString)
+
+      assertZIO(v.run("ab").either)(
+        isLeft(
+          equalTo(
+            Violations[String](
+              values = Vector(Violation.Required.toString),
+              children = Map(
+                Path("child") -> Violations.single(Violation.TooShortString("ab", 3).toString),
+              ),
+            ),
+          ),
+        ),
+      )
+    },
+    test("compose with >>") {
+      val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
+      val second: Validation[Any, Violation, String, String] = Validations.maxLength(3)
+      val v                                                  = (first >> second).mapError(_.toString)
+
+      assertZIO(v.run("hello").either)(
+        isLeft(equalTo(Violations.single(Violation.TooLongString("hello", 3).toString))),
+      )
+    },
+    test("compose with |+|") {
+      val v = (Validations.minLength(3) |+| Validations.maxLength(1)).mapError(_.toString)
+
+      assertZIO(v.run("ab").either)(
+        isLeft(
+          equalTo(
+            Violations(
+              Vector(
+                Violation.TooShortString("ab", 3).toString,
+                Violation.TooLongString("ab", 1).toString,
+              ),
+            ),
+          ),
+        ),
+      )
+    },
+  )
+
   val suiteOptional = suite("optional")(
     test("pass through None as success") {
       val v = Validations.minLength(3).optional
@@ -320,6 +387,7 @@ object ValidationSpec extends ZIOSpecDefault {
     suiteSucceed,
     suiteFail,
     suiteContramap,
+    suiteMapError,
     suiteOptional,
     suiteOptionCanBeValidatedAs,
     suiteSeqCanBeValidatedAs,
