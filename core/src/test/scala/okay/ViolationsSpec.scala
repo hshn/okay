@@ -71,5 +71,63 @@ object ViolationsSpec extends ZIOSpecDefault {
 
       assertTrue(a ++ b == c)
     },
+    suite("toList")(
+      test("empty Violations returns empty list") {
+        assertTrue(Violations.empty[String].toList == Nil)
+      },
+      test("flat Violations returns values with empty paths") {
+        val violations = Violations(values = Vector("a", "b"))
+        assertTrue(
+          violations.toList == List(
+            (Nil, "a"),
+            (Nil, "b"),
+          ),
+        )
+      },
+      test("nested Violations returns values with paths") {
+        val violations = Violations[String](
+          children = Map(
+            Path.Key("name") -> Violations(values = Vector("required")),
+          ),
+        )
+        assertTrue(
+          violations.toList == List(
+            (List(Path.Key("name")), "required"),
+          ),
+        )
+      },
+      test("deeply nested Violations returns full paths") {
+        val violations = Violations[String](
+          children = Map(
+            Path.Key("address") -> Violations[String](
+              children = Map(
+                Path.Key("zip") -> Violations(values = Vector("invalid")),
+              ),
+            ),
+          ),
+        )
+        assertTrue(
+          violations.toList == List(
+            (List(Path.Key("address"), Path.Key("zip")), "invalid"),
+          ),
+        )
+      },
+      test("mixed root and nested values are all included") {
+        val violations = Violations(
+          values = Vector("root-error"),
+          children = Map(
+            Path.Key("field") -> Violations(values = Vector("field-error")),
+            Path.Index(0)     -> Violations(values = Vector("index-error")),
+          ),
+        )
+        val result = violations.toList
+        assertTrue(
+          result.contains((Nil, "root-error")),
+          result.contains((List(Path.Key("field")), "field-error")),
+          result.contains((List(Path.Index(0)), "index-error")),
+          result.length == 3,
+        )
+      },
+    ),
   )
 }
