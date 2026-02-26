@@ -21,8 +21,7 @@ trait TupleZValidatedSyntax:
       validation.map(f)
 
   extension [R, V, T <: Tuple, Out <: Tuple](validations: T)(using tv: ValidateTuple[R, V, T, Out])
-    /** Run all effects in the tuple in parallel, accumulate all violations,
-      * and apply `f` to the results if all succeed.
+    /** Run all effects in the tuple in parallel, accumulate all violations, and apply `f` to the results if all succeed.
       */
     def validateN[A](f: Out => A): ZIO[R, Violations[V], A] =
       tv.validate(validations)

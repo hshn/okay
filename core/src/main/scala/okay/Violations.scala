@@ -4,9 +4,8 @@ import cats.kernel.Monoid
 
 /** A tree structure that accumulates validation violations with path information.
   *
-  * Each node holds direct violations in `values` and nested violations in `children`,
-  * keyed by [[Violations.Path]] (field name or collection index). This preserves the
-  * structural context of where each violation occurred.
+  * Each node holds direct violations in `values` and nested violations in `children`, keyed by [[Violations.Path]] (field name or
+  * collection index). This preserves the structural context of where each violation occurred.
   *
   * {{{
   * // Single violation at root
@@ -22,9 +21,12 @@ import cats.kernel.Monoid
   * violations.toList  // List((Paths("name"), "too short"), ...)
   * }}}
   *
-  * @tparam V the violation type
-  * @param values direct violations at this level
-  * @param children nested violations organized by path
+  * @tparam V
+  *   the violation type
+  * @param values
+  *   direct violations at this level
+  * @param children
+  *   nested violations organized by path
   */
 case class Violations[+V](
   values: Vector[V] = Vector.empty,
@@ -40,13 +42,13 @@ case class Violations[+V](
     )
 
   /** Wrap this violations tree as a child under the given path. */
-  def asChild(path: Path): Violations[V]  = Violations[V](children = Map(path -> this))
+  def asChild(path: Path): Violations[V] = Violations[V](children = Map(path -> this))
 
   /** Wrap this violations tree as a child under a field key. */
   def asChild(key: String): Violations[V] = asChild(Path.Key(key))
 
   /** Wrap this violations tree as a child under a collection index. */
-  def asChild(index: Int): Violations[V]  = asChild(Path.Index(index))
+  def asChild(index: Int): Violations[V] = asChild(Path.Index(index))
 
   /** Flatten this tree into a list of `(path, violation)` pairs.
     *

@@ -24,13 +24,12 @@ trait ValidateAsSyntax:
     def at(key: String): ZIO[R, Violations[V], A]           = at(Violations.Path.Key(key))
     def at(index: Int): ZIO[R, Violations[V], A]            = at(Violations.Path.Index(index))
 
-/** Intermediate class returned by `.validateAs[B]` that allows running the validation
-  * directly or with a path annotation via `.at(...)`.
+/** Intermediate class returned by `.validateAs[B]` that allows running the validation directly or with a path annotation via `.at(...)`.
   */
 final class ValidateAsPartiallyApplied[A, B](private val a: A):
 
   /** Run the validation using a given [[Validation]] instance. */
-  def apply[R, V](using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B]                     = validation.run(a)
+  def apply[R, V](using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B] = validation.run(a)
 
   /** Run the validation and nest any violations under the given path. */
   def at[R, V](path: Violations.Path)(using validation: Validation[R, V, A, B]): ZIO[R, Violations[V], B] =

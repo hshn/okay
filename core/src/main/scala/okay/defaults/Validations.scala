@@ -5,8 +5,8 @@ import scala.util.matching.Regex
 
 /** Pre-built validators using the [[Violation]] error type.
   *
-  * These are convenience wrappers around [[Validation]] factory methods
-  * with [[Violation]] as the violation type, ready to use out of the box.
+  * These are convenience wrappers around [[Validation]] factory methods with [[Violation]] as the violation type, ready to use out of the
+  * box.
   *
   * {{{
   * import okay.defaults.Validations
@@ -26,20 +26,17 @@ object Validations {
   def parseInt: Validation[Any, Violation, String, Int] =
     Validation.parseInt(Violation.NonIntegerString(_))
 
-  /** Validate that a string's length does not exceed `max`,
-    * failing with [[Violation.TooLongString]].
+  /** Validate that a string's length does not exceed `max`, failing with [[Violation.TooLongString]].
     */
   def maxLength(max: Int): Validation[Any, Violation, String, String] =
     Validation.maxLength(max)(Violation.TooLongString(_, _))
 
-  /** Validate that a string's length is at least `min`,
-    * failing with [[Violation.TooShortString]].
+  /** Validate that a string's length is at least `min`, failing with [[Violation.TooShortString]].
     */
   def minLength(min: Int): Validation[Any, Violation, String, String] =
     Validation.minLength(min)(Violation.TooShortString(_, _))
 
-  /** Validate that a string matches the given regex pattern,
-    * failing with [[Violation.Unmatched]].
+  /** Validate that a string matches the given regex pattern, failing with [[Violation.Unmatched]].
     */
   def matches(pattern: Regex): Validation[Any, Violation, String, String] =
     Validation.matches(pattern)(Violation.Unmatched(_, _))

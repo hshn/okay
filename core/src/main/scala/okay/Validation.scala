@@ -4,11 +4,10 @@ import cats.syntax.all.*
 import scala.util.matching.Regex
 import zio.ZIO
 
-/** A composable validation that transforms a value of type `A` into `B`,
-  * accumulating violations of type `V` on failure.
+/** A composable validation that transforms a value of type `A` into `B`, accumulating violations of type `V` on failure.
   *
-  * Validations can be composed sequentially with `>>` (short-circuit on first failure)
-  * or in parallel with `|+|` (accumulate all violations).
+  * Validations can be composed sequentially with `>>` (short-circuit on first failure) or in parallel with `|+|` (accumulate all
+  * violations).
   *
   * {{{
   * val nonEmpty: Validation[Any, String, String, String] =
@@ -24,16 +23,21 @@ import zio.ZIO
   * val chained = nonEmpty >> maxLen
   * }}}
   *
-  * @tparam R ZIO environment required to run this validation
-  * @tparam V violation type produced on failure
-  * @tparam A input type (contravariant)
-  * @tparam B output type on success (covariant)
+  * @tparam R
+  *   ZIO environment required to run this validation
+  * @tparam V
+  *   violation type produced on failure
+  * @tparam A
+  *   input type (contravariant)
+  * @tparam B
+  *   output type on success (covariant)
   */
 sealed abstract class Validation[-R, +V, -A, +B] { self =>
 
   /** Run this validation on the given input.
     *
-    * @return a ZIO effect that succeeds with `B` or fails with [[Violations]]
+    * @return
+    *   a ZIO effect that succeeds with `B` or fails with [[Violations]]
     */
   def run(a: A): ZIO[R, Violations[V], B]
 
@@ -104,8 +108,8 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
 
   /** Fall back to `that` validation if `this` one fails.
     *
-    * If `this` succeeds, its result is returned. If `this` fails, `that` is attempted;
-    * if `that` also fails, the violations from `this` (the first attempt) are returned.
+    * If `this` succeeds, its result is returned. If `this` fails, `that` is attempted; if `that` also fails, the violations from `this`
+    * (the first attempt) are returned.
     */
   def orElse[R1 <: R, V1 >: V, A1 <: A, B1 >: B](that: Validation[R1, V1, A1, B1]): Validation[R1, V1, A1, B1] =
     Validation.instance[A1] { a =>
@@ -114,8 +118,8 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
       }
     }
 
-  /** Lift this validation to handle `Option`: `None` passes through as `None`,
-    * `Some(a)` is validated and wrapped back in `Some` on success.
+  /** Lift this validation to handle `Option`: `None` passes through as `None`, `Some(a)` is validated and wrapped back in `Some` on
+    * success.
     */
   def optional: Validation[R, V, Option[A], Option[B]] =
     Validation.instance[Option[A]] {
@@ -185,8 +189,7 @@ object Validation {
       ZIO.fromEither(maybeA.toRight(Violations.single(error)))
     }
 
-  /** Parse a `String` to `Int`, failing with a violation produced from the original string
-    * on `NumberFormatException`.
+  /** Parse a `String` to `Int`, failing with a violation produced from the original string on `NumberFormatException`.
     */
   def parseInt[V](error: String => V): Validation[Any, V, String, Int] =
     instance[String] { value =>
@@ -220,8 +223,8 @@ object Validation {
       else ZIO.fail(Violations.single(error(value, pattern)))
     }
 
-  /** Automatically lifts a `Validation[R, V, A, B]` to `Validation[R, V, Option[A], Option[B]]`.
-    * `None` passes through; `Some(a)` is validated.
+  /** Automatically lifts a `Validation[R, V, A, B]` to `Validation[R, V, Option[A], Option[B]]`. `None` passes through; `Some(a)` is
+    * validated.
     */
   given optionCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, Option[A], Option[B]] =
     validation.optional
