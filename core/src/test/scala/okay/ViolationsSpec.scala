@@ -2,14 +2,11 @@ package okay
 
 import okay.Violations.Path
 import okay.Violations.Paths
-import zio.Scope
-import zio.test.Spec
-import zio.test.TestEnvironment
 import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
 
 object ViolationsSpec extends ZIOSpecDefault {
-  override def spec: Spec[TestEnvironment with Scope, Any] = suite("Violations")(
+  override def spec = suiteAll("Violations") {
     test("++ merges two Violations recursively") {
       val a = Violations(
         values = Vector("a", "b"),
@@ -71,11 +68,11 @@ object ViolationsSpec extends ZIOSpecDefault {
       )
 
       assertTrue(a ++ b == c)
-    },
+    }
     test("map transforms values") {
       val v = Violations(values = Vector(1, 2, 3))
       assertTrue(v.map(_ * 10) == Violations(values = Vector(10, 20, 30)))
-    },
+    }
     test("map transforms children recursively") {
       val v = Violations(
         values = Vector(1),
@@ -96,15 +93,15 @@ object ViolationsSpec extends ZIOSpecDefault {
         ),
       )
       assertTrue(v.map(_.toString) == expected)
-    },
+    }
     test("map on empty returns empty") {
       val v = Violations.empty[Int]
       assertTrue(v.map(_.toString) == Violations.empty[String])
-    },
-    suite("toList")(
+    }
+    suiteAll("toList") {
       test("empty Violations returns empty list") {
         assertTrue(Violations.empty[String].toList == Nil)
-      },
+      }
       test("flat Violations returns values with empty paths") {
         val violations = Violations(values = Vector("a", "b"))
         assertTrue(
@@ -113,7 +110,7 @@ object ViolationsSpec extends ZIOSpecDefault {
             (Paths.empty, "b"),
           ),
         )
-      },
+      }
       test("nested Violations returns values with paths") {
         val violations = Violations[String](
           children = Map(
@@ -125,7 +122,7 @@ object ViolationsSpec extends ZIOSpecDefault {
             (Paths(List(Path.Key("name"))), "required"),
           ),
         )
-      },
+      }
       test("deeply nested Violations returns full paths") {
         val violations = Violations[String](
           children = Map(
@@ -141,7 +138,7 @@ object ViolationsSpec extends ZIOSpecDefault {
             (Paths(List(Path.Key("address"), Path.Key("zip"))), "invalid"),
           ),
         )
-      },
+      }
       test("mixed root and nested values are all included") {
         val violations = Violations(
           values = Vector("root-error"),
@@ -157,30 +154,30 @@ object ViolationsSpec extends ZIOSpecDefault {
           result.contains((Paths(List(Path.Index(0))), "index-error")),
           result.length == 3,
         )
-      },
-    ),
-    suite("Paths#toString")(
+      }
+    }
+    suiteAll("Paths#toString") {
       test("empty paths") {
         assertTrue(Paths.empty.toString == "")
-      },
+      }
       test("single key") {
         assertTrue(Paths(List(Path.Key("name"))).toString == "name")
-      },
+      }
       test("nested keys") {
         assertTrue(Paths(List(Path.Key("address"), Path.Key("zip"))).toString == "address.zip")
-      },
+      }
       test("single index") {
         assertTrue(Paths(List(Path.Index(0))).toString == "[0]")
-      },
+      }
       test("key followed by index") {
         assertTrue(Paths(List(Path.Key("items"), Path.Index(0))).toString == "items[0]")
-      },
+      }
       test("key, index, key") {
         assertTrue(Paths(List(Path.Key("items"), Path.Index(0), Path.Key("name"))).toString == "items[0].name")
-      },
+      }
       test("index followed by key") {
         assertTrue(Paths(List(Path.Index(0), Path.Key("name"))).toString == "[0].name")
-      },
-    ),
-  )
+      }
+    }
+  }
 }
