@@ -233,16 +233,18 @@ object ValidationSpec extends ZIOSpecDefault {
       assertZIO(v.run("hello"))(equalTo("hello"))
     },
     test("transform nested violations preserving structure") {
-      val v = Validation.instance[String] { s =>
-        ZIO.fail(
-          Violations[Violation](
-            values = Vector(Violation.Required),
-            children = Map(
-              Path("child") -> Violations.single(Violation.TooShortString(s, 3)),
+      val v = Validation
+        .instance[String] { s =>
+          ZIO.fail(
+            Violations[Violation](
+              values = Vector(Violation.Required),
+              children = Map(
+                Path("child") -> Violations.single(Violation.TooShortString(s, 3)),
+              ),
             ),
-          ),
-        )
-      }.mapError(_.toString)
+          )
+        }
+        .mapError(_.toString)
 
       assertZIO(v.run("ab").either)(
         isLeft(
