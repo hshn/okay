@@ -219,6 +219,90 @@ object ValidationSpec extends ZIOSpecDefault {
     },
   )
 
+  val suiteOptional = suite("optional")(
+    test("pass through None as success") {
+      val v = Validations.minLength(3).optional
+      assertZIO(v.run(None))(equalTo(None))
+    },
+    test("validate Some value and wrap result in Some") {
+      val v = Validations.minLength(3).optional
+      assertZIO(v.run(Some("hello")))(equalTo(Some("hello")))
+    },
+    test("fail when Some value is invalid") {
+      val v = Validations.minLength(3).optional
+      assertZIO(v.run(Some("ab")).either)(
+        isLeft(equalTo(Violations.single(Violation.TooShortString("ab", 3)))),
+      )
+    },
+    test("compose with map") {
+      val v = Validations.minLength(1).optional.map(_.map(_.length))
+      assertZIO(v.run(Some("hello")))(equalTo(Some(5)))
+    },
+    test("compose with sequential >>") {
+      val v = (Validations.minLength(1) >> Validations.maxLength(5)).optional
+      assertZIO(v.run(Some("abc")))(equalTo(Some("abc")))
+    },
+    test("fail in sequential >> composition") {
+      val v = (Validations.minLength(1) >> Validations.maxLength(3)).optional
+      assertZIO(v.run(Some("hello")).either)(
+        isLeft(equalTo(Violations.single(Violation.TooLongString("hello", 3)))),
+      )
+    },
+  )
+
+  val suiteOptionCanBeValidatedAs = suite("optionCanBeValidatedAs")(
+    test("derive Option validation from given") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(1)
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+
+      assertZIO(v.run(Some("hello")))(equalTo(Some("hello")))
+    },
+    test("pass through None") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(1)
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+
+      assertZIO(v.run(None))(equalTo(None))
+    },
+    test("fail when Some value is invalid") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(5)
+      val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+
+      assertZIO(v.run(Some("ab")).either)(
+        isLeft(equalTo(Violations.single(Violation.TooShortString("ab", 5)))),
+      )
+    },
+  )
+
+  val suiteSeqCanBeValidatedAs = suite("seqCanBeValidatedAs")(
+    test("validate all elements in Seq") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(1)
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+
+      assertZIO(v.run(Seq("a", "bb", "ccc")))(equalTo(Seq("a", "bb", "ccc")))
+    },
+    test("succeed with empty Seq") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(1)
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+
+      assertZIO(v.run(Seq.empty))(equalTo(Seq.empty))
+    },
+    test("accumulate violations with indices") {
+      given Validation[Any, Violation, String, String] = Validations.minLength(3)
+      val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+
+      val expectedViolations = Violations[Violation](
+        children = Map(
+          Path(0) -> Violations(Vector(Violation.TooShortString("ab", 3))),
+          Path(2) -> Violations(Vector(Violation.TooShortString("x", 3))),
+        ),
+      )
+
+      assertZIO(v.run(Seq("ab", "hello", "x")).either)(
+        isLeft(equalTo(expectedViolations)),
+      )
+    },
+  )
+
   val suiteParallelism = suite("parallelism")(
     test("validateN runs validations in parallel") {
       for
@@ -236,6 +320,9 @@ object ValidationSpec extends ZIOSpecDefault {
     suiteSucceed,
     suiteFail,
     suiteContramap,
+    suiteOptional,
+    suiteOptionCanBeValidatedAs,
+    suiteSeqCanBeValidatedAs,
     suiteForProduct,
     suiteParallelism,
   )

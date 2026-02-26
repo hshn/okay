@@ -38,6 +38,12 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
         c
       }
     }
+
+  def optional: Validation[R, V, Option[A], Option[B]] =
+    Validation.instance[Option[A]] {
+      case Some(a) => self.run(a).map(Some(_))
+      case None    => ZIO.succeed(None)
+    }
 }
 
 object Validation {
@@ -102,10 +108,13 @@ object Validation {
       else ZIO.fail(Violations.single(error(value, pattern)))
     }
 
-  given listCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =
+  given optionCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, Option[A], Option[B]] =
+    validation.optional
+
+  given seqCanBeValidatedAs[R, V, A, B](using validation: Validation[R, V, A, B]): Validation[R, V, Seq[A], Seq[B]] =
     Validation.instance { values =>
       ZIO
-        .foreach(values.zipWithIndex) { case (a, index) =>
+        .foreach(values.toList.zipWithIndex) { case (a, index) =>
           validation.run(a).at(index).either.map(_.toValidatedNec)
         }
         .map { results =>
@@ -113,6 +122,9 @@ object Validation {
         }
         .absolve
     }
+
+  given listCanBeValidatedAs[R, V, A, B](using Validation[R, V, A, B]): Validation[R, V, List[A], List[B]] =
+    seqCanBeValidatedAs[R, V, A, B].contramap[List[A]](identity).map(_.toList)
 
   given mapCanBeValidatedAs[R, V, A, B](using
     validation: Validation[R, V, A, B],
