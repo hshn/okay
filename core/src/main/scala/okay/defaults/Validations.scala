@@ -41,6 +41,21 @@ object Validations {
   def matches(pattern: Regex): Validation[Any, Violation, String, String] =
     Validation.matches(pattern)(Violation.Unmatched(_, _))
 
+  /** Validate that an integer is greater than or equal to `n`, failing with [[Violation.TooSmall]].
+    */
+  def min(n: Int): Validation[Any, Violation, Int, Int] =
+    Validation.min(n)(Violation.TooSmall(_, n))
+
+  /** Validate that an integer is less than or equal to `n`, failing with [[Violation.TooLarge]].
+    */
+  def max(n: Int): Validation[Any, Violation, Int, Int] =
+    Validation.max(n)(Violation.TooLarge(_, n))
+
+  /** Validate that an integer is strictly positive, failing with [[Violation.NonPositive]].
+    */
+  def positive: Validation[Any, Violation, Int, Int] =
+    Validation.positive(Violation.NonPositive(_))
+
   /** Look up a `Validation[Violation, B, C]` from given instances.
     *
     * {{{
