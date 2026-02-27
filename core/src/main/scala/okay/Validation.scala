@@ -216,6 +216,18 @@ object Validation {
       value.length >= min
     }
 
+  /** Validate that an integer is greater than or equal to `n`. */
+  def min[V](n: Int)(error: Int => V): Validation[Any, V, Int, Int] =
+    ensureOr[V, Int](error)(_ >= n)
+
+  /** Validate that an integer is less than or equal to `n`. */
+  def max[V](n: Int)(error: Int => V): Validation[Any, V, Int, Int] =
+    ensureOr[V, Int](error)(_ <= n)
+
+  /** Validate that an integer is strictly positive (greater than zero). */
+  def positive[V](error: Int => V): Validation[Any, V, Int, Int] =
+    ensureOr[V, Int](error)(_ > 0)
+
   /** Validate that a string matches the given regex pattern. */
   def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[Any, V, String, String] =
     instance[String] { value =>

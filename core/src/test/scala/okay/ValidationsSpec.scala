@@ -66,6 +66,54 @@ object ValidationsSpec extends ZIOSpecDefault {
         yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString(value, minLength = 4)))
       }
     }
+    suiteAll("min() can test minimum value") {
+      test("success") {
+        val validation = Validations.min(n = 5)
+
+        for result <- validation.run(5)
+        yield assertTrue(result == 5)
+      }
+      test("failure") {
+        val validation = Validations.min(n = 5)
+
+        for result <- validation.run(4).either
+        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooSmall(value = 4, min = 5)))
+      }
+    }
+    suiteAll("max() can test maximum value") {
+      test("success") {
+        val validation = Validations.max(n = 10)
+
+        for result <- validation.run(10)
+        yield assertTrue(result == 10)
+      }
+      test("failure") {
+        val validation = Validations.max(n = 10)
+
+        for result <- validation.run(11).either
+        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooLarge(value = 11, max = 10)))
+      }
+    }
+    suiteAll("positive() can test positive value") {
+      test("success") {
+        val validation = Validations.positive
+
+        for result <- validation.run(1)
+        yield assertTrue(result == 1)
+      }
+      test("failure with zero") {
+        val validation = Validations.positive
+
+        for result <- validation.run(0).either
+        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonPositive(value = 0)))
+      }
+      test("failure with negative") {
+        val validation = Validations.positive
+
+        for result <- validation.run(-1).either
+        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonPositive(value = -1)))
+      }
+    }
     suiteAll("matches() can test with regex") {
       test("success") {
         val pattern    = "^abc$".r

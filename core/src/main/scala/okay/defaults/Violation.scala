@@ -21,3 +21,12 @@ enum Violation:
 
   /** The string did not match the expected regex pattern. */
   case Unmatched(value: String, pattern: Regex)
+
+  /** The integer was below the minimum allowed value. */
+  case TooSmall(value: Int, min: Int)
+
+  /** The integer exceeded the maximum allowed value. */
+  case TooLarge(value: Int, max: Int)
+
+  /** The integer was not strictly positive. */
+  case NonPositive(value: Int)
