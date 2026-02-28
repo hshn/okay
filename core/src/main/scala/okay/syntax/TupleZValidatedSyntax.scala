@@ -41,8 +41,8 @@ object ValidateTuple:
       t.head.either
         .zipPar(tail.validate(t.tail))
         .map {
-          case (Right(h), Right(t))    => Right(h *: t)
-          case (Left(e1), Left(e2))    => Left(e1 ++ e2)
-          case (Left(e), _)            => Left(e)
-          case (_, Left(e))            => Left(e)
+          case (Right(h), Right(t)) => Right(h *: t)
+          case (Left(e1), Left(e2)) => Left(e1 ++ e2)
+          case (Left(e), _)         => Left(e)
+          case (_, Left(e))         => Left(e)
         }
