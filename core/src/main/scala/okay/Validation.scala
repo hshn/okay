@@ -1,6 +1,5 @@
 package okay
 
-import cats.syntax.all.*
 import scala.util.matching.Regex
 import zio.ZIO
 
@@ -246,10 +245,12 @@ object Validation {
     Validation.instance { values =>
       ZIO
         .foreach(values.toList.zipWithIndex) { case (a, index) =>
-          validation.run(a).at(index).either.map(_.toValidatedNec)
+          validation.run(a).at(index).either
         }
         .map { results =>
-          results.sequence.leftMap(_.combineAll).toEither
+          val (errors, successes) = results.partitionMap(identity)
+          if (errors.isEmpty) Right(successes)
+          else Left(errors.reduce(_ ++ _))
         }
         .absolve
     }
@@ -265,13 +266,12 @@ object Validation {
     Validation.instance { values =>
       ZIO
         .foreach(values.toList) { case (key, a) =>
-          validation.run(a).at(key).map(b => key -> b).either.map(_.toValidatedNec)
+          validation.run(a).at(key).map(b => key -> b).either
         }
         .map { results =>
-          results.sequence
-            .map(_.toMap)
-            .leftMap(_.combineAll)
-            .toEither
+          val (errors, successes) = results.partitionMap(identity)
+          if (errors.isEmpty) Right(successes.toMap)
+          else Left(errors.reduce(_ ++ _))
         }
         .absolve
     }

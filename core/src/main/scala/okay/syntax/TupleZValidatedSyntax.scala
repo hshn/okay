@@ -1,7 +1,5 @@
 package okay.syntax
 
-import cats.data.ValidatedNec
-import cats.syntax.all.*
 import okay.Violations
 import zio.ZIO
 
@@ -25,22 +23,26 @@ trait TupleZValidatedSyntax:
       */
     def validateN[A](f: Out => A): ZIO[R, Violations[V], A] =
       tv.validate(validations)
-        .map(_.map(f).leftMap(_.combineAll).toEither)
+        .map(_.map(f))
         .absolve
 
 sealed trait ValidateTuple[R, V, T <: Tuple, Out <: Tuple]:
-  def validate(t: T): ZIO[R, Nothing, ValidatedNec[Violations[V], Out]]
+  def validate(t: T): ZIO[R, Nothing, Either[Violations[V], Out]]
 
 object ValidateTuple:
   given empty[R, V]: ValidateTuple[R, V, EmptyTuple, EmptyTuple] with
-    def validate(t: EmptyTuple): ZIO[R, Nothing, ValidatedNec[Violations[V], EmptyTuple]] =
-      ZIO.succeed(EmptyTuple.validNec)
+    def validate(t: EmptyTuple): ZIO[R, Nothing, Either[Violations[V], EmptyTuple]] =
+      ZIO.succeed(Right(EmptyTuple))
 
   given cons[R, V, H, T <: Tuple, TOut <: Tuple](using
     tail: ValidateTuple[R, V, T, TOut],
   ): ValidateTuple[R, V, ZIO[R, Violations[V], H] *: T, H *: TOut] with
-    def validate(t: ZIO[R, Violations[V], H] *: T): ZIO[R, Nothing, ValidatedNec[Violations[V], H *: TOut]] =
+    def validate(t: ZIO[R, Violations[V], H] *: T): ZIO[R, Nothing, Either[Violations[V], H *: TOut]] =
       t.head.either
-        .map(_.toValidatedNec)
         .zipPar(tail.validate(t.tail))
-        .map { case (headResult, tailResult) => (headResult, tailResult).mapN(_ *: _) }
+        .map {
+          case (Right(h), Right(t))    => Right(h *: t)
+          case (Left(e1), Left(e2))    => Left(e1 ++ e2)
+          case (Left(e), _)            => Left(e)
+          case (_, Left(e))            => Left(e)
+        }

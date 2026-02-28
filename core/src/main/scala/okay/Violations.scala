@@ -1,7 +1,5 @@
 package okay
 
-import cats.kernel.Monoid
-
 /** A tree structure that accumulates validation violations with path information.
   *
   * Each node holds direct violations in `values` and nested violations in `children`, keyed by [[Violations.Path]] (field name or
@@ -86,8 +84,6 @@ object Violations {
 
   /** An empty [[Violations]] with no violations. */
   def empty[V]: Violations[V] = _empty
-
-  given [V]: Monoid[Violations[V]] = Monoid.instance(empty, { _ ++ _ })
 
   /** A segment in a violation path, representing either a field key or a collection index. */
   enum Path:
