@@ -27,12 +27,10 @@ lazy val core = (project in file("core"))
       val zio = "2.1.24"
 
       Seq(
-        "org.typelevel" %% "cats-core"         % "2.13.0",
-        "dev.zio"       %% "zio"               % zio,
-        "dev.zio"       %% "zio-prelude"       % "1.0.0-RC46",
-        "dev.zio"       %% "zio-test"          % zio % Test,
-        "dev.zio"       %% "zio-test-sbt"      % zio % Test,
-        "dev.zio"       %% "zio-test-magnolia" % zio % Test,
+        "dev.zio" %% "zio"               % zio,
+        "dev.zio" %% "zio-test"          % zio % Test,
+        "dev.zio" %% "zio-test-sbt"      % zio % Test,
+        "dev.zio" %% "zio-test-magnolia" % zio % Test,
       )
     },
   )

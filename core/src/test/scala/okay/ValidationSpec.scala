@@ -1,6 +1,5 @@
 package okay
 
-import cats.syntax.all.*
 import okay.Validation.*
 import okay.Violations.Path
 import okay.defaults.{given, *}
@@ -98,19 +97,19 @@ object ValidationSpec extends ZIOSpecDefault {
           a1 = None,
           a2 = "yay",
           a3 = List(
-            Dirty.Child(name = "0".some),
+            Dirty.Child(name = Some("0")),
             Dirty.Child(name = None),
-            Dirty.Child(name = "2".some),
-            Dirty.Child(name = "3".some),
+            Dirty.Child(name = Some("2")),
+            Dirty.Child(name = Some("3")),
             Dirty.Child(name = None),
-            Dirty.Child(name = "5".some),
+            Dirty.Child(name = Some("5")),
           ),
           a4 = Map(
             "a" -> Dirty.Child(name = None),
-            "b" -> Dirty.Child(name = "1".some),
+            "b" -> Dirty.Child(name = Some("1")),
             "c" -> Dirty.Child(name = None),
             "d" -> Dirty.Child(name = None),
-            "e" -> Dirty.Child(name = "4".some),
+            "e" -> Dirty.Child(name = Some("4")),
             "f" -> Dirty.Child(name = None),
           ),
         )
@@ -141,17 +140,17 @@ object ValidationSpec extends ZIOSpecDefault {
       }
       test("result transformed object when valid") {
         val valid = Dirty(
-          a1 = "hi".some,
+          a1 = Some("hi"),
           a2 = "123",
           a3 = List(
-            Dirty.Child(name = "0".some),
-            Dirty.Child(name = "2".some),
-            Dirty.Child(name = "3".some),
-            Dirty.Child(name = "5".some),
+            Dirty.Child(name = Some("0")),
+            Dirty.Child(name = Some("2")),
+            Dirty.Child(name = Some("3")),
+            Dirty.Child(name = Some("5")),
           ),
           a4 = Map(
-            "b" -> Dirty.Child(name = "1".some),
-            "e" -> Dirty.Child(name = "4".some),
+            "b" -> Dirty.Child(name = Some("1")),
+            "e" -> Dirty.Child(name = Some("4")),
           ),
         )
 
@@ -202,14 +201,14 @@ object ValidationSpec extends ZIOSpecDefault {
         val nonEmpty: Validation[Any, Violation, String, String]            = Validations.minLength(1)
         val nameValidation: Validation[Any, Violation, Dirty.Child, String] = nonEmpty.contramap(_.name.getOrElse(""))
 
-        for result <- nameValidation.run(Dirty.Child(name = "Alice".some))
+        for result <- nameValidation.run(Dirty.Child(name = Some("Alice")))
         yield assertTrue(result == "Alice")
       }
       test("propagate violations from adapted input") {
         val minLength3: Validation[Any, Violation, String, String]          = Validations.minLength(3)
         val nameValidation: Validation[Any, Violation, Dirty.Child, String] = minLength3.contramap(_.name.getOrElse(""))
 
-        for result <- nameValidation.run(Dirty.Child(name = "ab".some)).either
+        for result <- nameValidation.run(Dirty.Child(name = Some("ab"))).either
         yield assertTrue(result.is(_.left) == Violations(Vector(Violation.TooShortString("ab", 3))))
       }
     }
