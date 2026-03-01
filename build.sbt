@@ -10,6 +10,8 @@ ThisBuild / scalacOptions ++= Seq(
 
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
+val zio = "2.1.24"
+
 lazy val root = (project in file(".") withId "okay")
   .settings(
     Compile / unmanagedSourceDirectories   := Nil,
@@ -19,18 +21,23 @@ lazy val root = (project in file(".") withId "okay")
   )
   .aggregate(
     core,
+    `zio-prelude`,
   )
 
 lazy val core = (project in file("core"))
   .settings(
-    libraryDependencies ++= {
-      val zio = "2.1.24"
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio"               % zio,
+      "dev.zio" %% "zio-test"          % zio % Test,
+      "dev.zio" %% "zio-test-sbt"      % zio % Test,
+      "dev.zio" %% "zio-test-magnolia" % zio % Test,
+    ),
+  )
 
-      Seq(
-        "dev.zio" %% "zio"               % zio,
-        "dev.zio" %% "zio-test"          % zio % Test,
-        "dev.zio" %% "zio-test-sbt"      % zio % Test,
-        "dev.zio" %% "zio-test-magnolia" % zio % Test,
-      )
-    },
+lazy val `zio-prelude` = (project in file("zio-prelude"))
+  .dependsOn(core % "test->test;compile->compile")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-prelude" % "1.0.0-RC46",
+    ),
   )
