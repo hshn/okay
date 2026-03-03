@@ -1,6 +1,7 @@
 package okay
 
 import okay.defaults.{given, *}
+import okay.prelude.*
 import zio.prelude.Assertion
 import zio.prelude.Newtype
 import zio.test.*

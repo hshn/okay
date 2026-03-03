@@ -1,9 +1,9 @@
-package okay
+package okay.prelude
 
+import okay.*
 import zio.ZIO
 import zio.prelude.AssociativeBoth
 
-/** `AssociativeBoth` for `ZIO` with `Violations` error type that accumulates all violations instead of short-circuiting. */
 given violationsAssociativeBoth[R, V]: AssociativeBoth[[X] =>> ZIO[R, Violations[V], X]] with
   def both[A, B](fa: => ZIO[R, Violations[V], A], fb: => ZIO[R, Violations[V], B]): ZIO[R, Violations[V], (A, B)] =
     (fa.either zip fb.either).flatMap {

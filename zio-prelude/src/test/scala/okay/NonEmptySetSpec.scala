@@ -1,6 +1,7 @@
 package okay
 
 import okay.defaults.{given, *}
+import okay.prelude.given
 import zio.prelude.NonEmptySet
 import zio.test.*
 
