@@ -34,7 +34,7 @@ lazy val core = (project in file("core"))
     ),
   )
 
-lazy val `zio-prelude` = (project in file("zio-prelude"))
+lazy val `zio-prelude` = (project in file("zio-prelude") withId "okay-zio-prelude")
   .dependsOn(core % "test->test;compile->compile")
   .settings(
     libraryDependencies ++= Seq(
