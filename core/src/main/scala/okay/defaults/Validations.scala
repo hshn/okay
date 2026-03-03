@@ -29,9 +29,4 @@ object Validations {
   def positive: Validation[Any, Violation, Int, Int] =
     Validation.positive(Violation.NonPositive(_))
 
-  def as[C] = new AsPartiallyApplied[C]
-
-  final private[okay] class AsPartiallyApplied[C] {
-    def apply[R, B]()(using validation: Validation[R, Violation, B, C]): Validation[R, Violation, B, C] = validation
-  }
 }
