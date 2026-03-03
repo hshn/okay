@@ -12,15 +12,12 @@ import zio.ZIO
   * ).validateN { case (name, age) => User(name, age) }
   * }}}
   */
-trait TupleZValidatedSyntax:
+trait ValidateN:
   extension [R, V, A](validation: ZIO[R, Violations[V], A])
-    /** Map over the success value. Equivalent to `.map(f)`, provided for symmetry with the tuple overload. */
     def validateN[B](f: A => B): ZIO[R, Violations[V], B] =
       validation.map(f)
 
   extension [R, V, T <: Tuple, Out <: Tuple](validations: T)(using tv: ValidateTuple[R, V, T, Out])
-    /** Run all effects in the tuple in parallel, accumulate all violations, and apply `f` to the results if all succeed.
-      */
     def validateN[A](f: Out => A): ZIO[R, Violations[V], A] =
       tv.validate(validations)
         .map(_.map(f))

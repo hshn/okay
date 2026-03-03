@@ -1,3 +1,3 @@
 package okay
 
-export okay.syntax.StandardSyntax.*
+export okay.syntax.all.*

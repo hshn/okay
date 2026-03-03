@@ -1,7 +1,6 @@
 package okay
 
-import okay.defaults.{given, *}
-import okay.defaults.Validations
+import okay.defaults.*
 import zio.test.*
 
 object ValidationsSpec extends ZIOSpecDefault {

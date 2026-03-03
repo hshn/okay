@@ -7,13 +7,13 @@ import zio.ZIO
 /** Provides `.validateAs[B]` on any value and `.at(path)` on ZIO effects that fail with [[Violations]].
   *
   * {{{
-  * import okay.defaults.given
+  * import okay.defaults.*
   *
   * val result: ZIO[Any, Violations[Violation], Int] = "42".validateAs[Int]
   * val atField: ZIO[Any, Violations[Violation], Int] = "42".validateAs[Int].at("age")
   * }}}
   */
-trait ValidateAsSyntax:
+trait ValidateAs:
   extension [A](a: A) def validateAs[B](using va: ValidatedAs[A, B]): ZIO[va.Env, Violations[va.Err], B] = va.run(a)
 
   extension [R, V, A](value: ZIO[R, Violations[V], A])
