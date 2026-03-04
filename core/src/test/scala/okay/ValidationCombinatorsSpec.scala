@@ -41,7 +41,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
     suiteAll(">>") {
       test("chain two validations sequentially") {
         val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val second: Validation[Any, Violation, String, Int] = Validation.instance[String] { s =>
+        val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
           ZIO.succeed(s.length)
         }
 
@@ -50,7 +50,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
       }
       test("fail on first validation") {
         val first: Validation[Any, Violation, String, String] = Validations.minLength(10)
-        val second: Validation[Any, Violation, String, Int] = Validation.instance[String] { s =>
+        val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
           ZIO.succeed(s.length)
         }
 
@@ -58,7 +58,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("hi", 10)))
       }
       test("fail on second validation") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
+        val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Any, Violation, String, String] = Validations.maxLength(2)
 
         for result <- (first >> second).run("hello").either
@@ -76,21 +76,21 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
     }
     suiteAll("orElse") {
       test("return first result when first succeeds") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
+        val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Any, Violation, String, String] = Validations.minLength(5)
 
         for result <- first.orElse(second).run("ab")
         yield assertTrue(result == "ab")
       }
       test("fall back to second when first fails") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(10)
+        val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
         val second: Validation[Any, Violation, String, String] = Validations.minLength(1)
 
         for result <- first.orElse(second).run("hello")
         yield assertTrue(result == "hello")
       }
       test("return first violation when both fail") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(10)
+        val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
         val second: Validation[Any, Violation, String, String] = Validations.maxLength(1)
 
         for result <- first.orElse(second).run("hello").either

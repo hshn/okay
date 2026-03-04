@@ -85,8 +85,8 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
     suiteAll("mapCanBeValidatedAs") {
       test("validate all values in Map") {
         given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
-        val input = Map(
+        val v                                            = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
+        val input                                        = Map(
           "a" -> "x",
           "b" -> "yy",
         )
@@ -96,7 +96,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
       }
       test("accumulate violations with keys") {
         given Validation[Any, Violation, String, String] = Validations.minLength(3)
-        val v = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
+        val v                                            = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
 
         val expectedViolations = Violations[Violation](
           children = Map(

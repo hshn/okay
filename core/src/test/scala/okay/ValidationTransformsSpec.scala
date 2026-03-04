@@ -32,7 +32,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
     }
     suiteAll("contramap") {
       test("adapt input type before validation") {
-        val nonEmpty: Validation[Any, Violation, String, String] = Validations.minLength(1)
+        val nonEmpty: Validation[Any, Violation, String, String]          = Validations.minLength(1)
         val nameValidation: Validation[Any, Violation, NameInput, String] =
           nonEmpty.contramap(_.name.getOrElse(""))
 
@@ -40,7 +40,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
         yield assertTrue(result == "Alice")
       }
       test("propagate violations from adapted input") {
-        val minLength3: Validation[Any, Violation, String, String] = Validations.minLength(3)
+        val minLength3: Validation[Any, Violation, String, String]        = Validations.minLength(3)
         val nameValidation: Validation[Any, Violation, NameInput, String] =
           minLength3.contramap(_.name.getOrElse(""))
 
@@ -86,7 +86,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
         )
       }
       test("compose with >>") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
+        val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Any, Violation, String, String] = Validations.maxLength(3)
         val v                                                  = (first >> second).mapError(_.toString)
 
