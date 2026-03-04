@@ -1,7 +1,7 @@
 package yoshi.defaults
 
-import yoshi.*
 import scala.util.matching.Regex
+import yoshi.*
 
 object Validations {
 
