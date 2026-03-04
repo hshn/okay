@@ -21,4 +21,4 @@ labels: bug
 ## Environment
 
 - Scala version:
-- okay version:
+- yoshi version:
