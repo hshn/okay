@@ -12,7 +12,7 @@ ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
 val zio = "2.1.24"
 
-lazy val root = (project in file(".") withId "okay")
+lazy val root = (project in file(".") withId "yoshi")
   .settings(
     Compile / unmanagedSourceDirectories   := Nil,
     Compile / unmanagedResourceDirectories := Nil,
@@ -34,7 +34,7 @@ lazy val core = (project in file("core"))
     ),
   )
 
-lazy val `zio-prelude` = (project in file("zio-prelude") withId "okay-zio-prelude")
+lazy val `zio-prelude` = (project in file("zio-prelude") withId "yoshi-zio-prelude")
   .dependsOn(core % "test->test;compile->compile")
   .settings(
     libraryDependencies ++= Seq(
