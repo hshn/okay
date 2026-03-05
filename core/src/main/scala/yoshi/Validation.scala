@@ -152,8 +152,8 @@ object Validation extends ValidationInstances {
 
   /** Create a [[Validation]] from a function that receives a [[ValidationCursor]].
     *
-    * The cursor provides field access with automatic path tracking, eliminating the need for manual `.at("field")`
-    * calls. The field name is extracted from the accessor lambda at compile time.
+    * The cursor provides field access with automatic path tracking, eliminating the need for manual `.at("field")` calls. The field name is
+    * extracted from the accessor lambda at compile time.
     *
     * {{{
     * val v: Validation[Any, Violation, FormInput, Order] =

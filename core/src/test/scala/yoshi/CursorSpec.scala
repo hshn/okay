@@ -70,8 +70,8 @@ object CursorSpec extends ZIOSpecDefault {
 
         val expected = Violations[Violation](
           children = Map(
-            Violations.Path("name") -> Violations(Vector(Violation.Required)),
-            Violations.Path("age") -> Violations(Vector(Violation.NonIntegerString("abc"))),
+            Violations.Path("name")  -> Violations(Vector(Violation.Required)),
+            Violations.Path("age")   -> Violations(Vector(Violation.NonIntegerString("abc"))),
             Violations.Path("items") -> Violations(
               children = Map(
                 Violations.Path(1) -> Violations(Vector(Violation.Required)).asChild("label"),
@@ -139,7 +139,7 @@ object CursorSpec extends ZIOSpecDefault {
         val invalid = Input(name = None, age = "", items = Nil)
 
         for
-          fieldResult <- withField.run(invalid).either
+          fieldResult     <- withField.run(invalid).either
           shorthandResult <- withShorthand.run(invalid).either
         yield assertTrue(fieldResult == shorthandResult)
       }

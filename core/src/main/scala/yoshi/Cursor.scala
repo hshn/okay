@@ -6,8 +6,8 @@ import zio.ZIO
 
 /** A cursor over a value of type `A` that provides field access with automatic path tracking.
   *
-  * Obtained via [[Validation.cursor]]. The cursor extracts field names from accessor lambdas at compile time, so
-  * violations automatically carry the correct path without manual `.at("field")` calls.
+  * Obtained via [[Validation.cursor]]. The cursor extracts field names from accessor lambdas at compile time, so violations automatically
+  * carry the correct path without manual `.at("field")` calls.
   *
   * {{{
   * Validation.cursor[FormInput] { c =>
@@ -31,8 +31,7 @@ final class ValidationCursor[A](private val underlying: A):
 
   /** Extract a field value and derive the path name from the accessor at compile time.
     *
-    * Only simple field accessors are supported (e.g. `_.name`). Nested paths or computed expressions will produce a
-    * compile error.
+    * Only simple field accessors are supported (e.g. `_.name`). Nested paths or computed expressions will produce a compile error.
     *
     * {{{
     * cursor.field(_.name) // CursorField("Alice", "name")
@@ -62,8 +61,7 @@ final class CursorValidateAs[A, B](private val underlying: A):
 
 /** A field value paired with its auto-derived path, obtained via [[ValidationCursor.field]].
   *
-  * Call [[validateAs]] to run validation with the path automatically attached, or [[at]] to override the path before
-  * validating.
+  * Call [[validateAs]] to run validation with the path automatically attached, or [[at]] to override the path before validating.
   *
   * {{{
   * cursor.field(_.name).validateAs[String]                // path "name"
@@ -81,8 +79,8 @@ final class CursorField[B](val value: B, val path: String):
 
   /** Override the auto-derived path.
     *
-    * Returns a new [[CursorField]] with the same value but a different path. Useful when the domain field name differs
-    * from the input field name.
+    * Returns a new [[CursorField]] with the same value but a different path. Useful when the domain field name differs from the input field
+    * name.
     *
     * {{{
     * cursor.field(_.name).at("display_name").validateAs[String]
