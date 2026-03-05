@@ -48,6 +48,18 @@ case class Violations[+V](
   /** Wrap this violations tree as a child under a collection index. */
   def asChild(index: Int): Violations[V] = asChild(Path.Index(index))
 
+  /** Wrap this violations tree under a full path, nesting one level per segment.
+    *
+    * {{{
+    * val vs = Violations.single("required")
+    * vs.asChild(Paths(List(Key("address"), Key("zip"))))
+    * // equivalent to vs.asChild("zip").asChild("address")
+    * // produces: address → zip → "required"
+    * }}}
+    */
+  def asChild(paths: Paths): Violations[V] =
+    paths.segments.foldRight(this)((segment, v) => v.asChild(segment))
+
   /** Flatten this tree into a list of `(path, violation)` pairs.
     *
     * {{{

@@ -9,10 +9,12 @@ object CursorSpec extends ZIOSpecDefault {
     name: Option[String],
     age: String,
     items: List[Input.Item],
+    address: Input.Address,
   )
 
   object Input:
     case class Item(label: Option[String])
+    case class Address(zip: Option[String])
 
   case class Output(
     name: String,
@@ -50,6 +52,7 @@ object CursorSpec extends ZIOSpecDefault {
           name = Some("Alice"),
           age = "30",
           items = List(Input.Item(Some("item1")), Input.Item(Some("item2"))),
+          address = Input.Address(Some("12345")),
         )
         val expected = Output(
           name = "Alice",
@@ -66,6 +69,7 @@ object CursorSpec extends ZIOSpecDefault {
           name = None,
           age = "abc",
           items = List(Input.Item(Some("ok")), Input.Item(None)),
+          address = Input.Address(None),
         )
 
         val expected = Violations[Violation](
@@ -96,12 +100,37 @@ object CursorSpec extends ZIOSpecDefault {
             }
           }
 
-        val invalid = Input(name = None, age = "xyz", items = List(Input.Item(None)))
+        val invalid = Input(name = None, age = "xyz", items = List(Input.Item(None)), address = Input.Address(None))
 
         for
           cursorResult <- validation.run(invalid).either
           manualResult <- manualValidation.run(invalid).either
         yield assertTrue(cursorResult == manualResult)
+      }
+    }
+
+    suiteAll("nested field access") {
+      test("derives full path from nested accessor") {
+        val v: Validation[Any, Violation, Input, String] =
+          Validation.cursor[Input] { c =>
+            c.field(_.address.zip).validateAs[String]
+          }
+
+        val input = Input(name = None, age = "", items = Nil, address = Input.Address(None))
+
+        for result <- v.run(input).either
+        yield {
+          val expected = Violations[Violation](
+            children = Map(
+              Violations.Path("address") -> Violations(
+                children = Map(
+                  Violations.Path("zip") -> Violations(Vector(Violation.Required)),
+                ),
+              ),
+            ),
+          )
+          assertTrue(result == Left(expected))
+        }
       }
     }
 
@@ -112,7 +141,7 @@ object CursorSpec extends ZIOSpecDefault {
             c.field(_.name).at("display_name").validateAs[String]
           }
 
-        for result <- v.run(Input(name = None, age = "", items = Nil)).either
+        for result <- v.run(Input(name = None, age = "", items = Nil, address = Input.Address(None))).either
         yield {
           val expected = Violations[Violation](
             children = Map(
@@ -136,7 +165,7 @@ object CursorSpec extends ZIOSpecDefault {
             c.validateAs[String](_.name)
           }
 
-        val invalid = Input(name = None, age = "", items = Nil)
+        val invalid = Input(name = None, age = "", items = Nil, address = Input.Address(None))
 
         for
           fieldResult     <- withField.run(invalid).either

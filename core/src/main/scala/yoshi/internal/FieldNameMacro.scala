@@ -2,33 +2,33 @@ package yoshi.internal
 
 import scala.quoted.*
 
-/** Extract the terminal field name from an accessor lambda at compile time.
+/** Extract field names from an accessor lambda at compile time.
   *
-  * For simple accessors, the field name is extracted directly:
   * {{{
-  * fieldName(_.name)         // "name"
-  * fieldName(_.address.zip)  // "zip" (last segment only)
+  * fieldNames(_.name)         // List("name")
+  * fieldNames(_.address.zip)  // List("address", "zip")
   * }}}
   *
   * Method calls with arguments or computed expressions will produce a compile error.
   */
-inline def fieldName[A, B](inline f: A => B): String =
-  ${ fieldNameImpl[A, B]('f) }
+inline def fieldNames[A, B](inline f: A => B): List[String] =
+  ${ fieldNamesImpl[A, B]('f) }
 
-private def fieldNameImpl[A: Type, B: Type](f: Expr[A => B])(using Quotes): Expr[String] =
+private def fieldNamesImpl[A: Type, B: Type](f: Expr[A => B])(using Quotes): Expr[List[String]] =
   import quotes.reflect.*
 
-  def extractName(term: Term): Option[String] = term match
-    case Select(_, name)      => Some(name)
-    case Inlined(_, _, inner) => extractName(inner)
-    case Lambda(_, body)      => extractName(body)
-    case Block(_, expr)       => extractName(expr)
-    case Typed(expr, _)       => extractName(expr)
-    case _                    => None
+  def collectNames(term: Term): Option[List[String]] = term match
+    case Ident(_)                => Some(Nil)
+    case Select(qualifier, name) => collectNames(qualifier).map(_ :+ name)
+    case Inlined(_, _, inner)    => collectNames(inner)
+    case Lambda(_, body)         => collectNames(body)
+    case Block(_, expr)          => collectNames(expr)
+    case Typed(expr, _)          => collectNames(expr)
+    case _                       => None
 
-  extractName(f.asTerm) match
-    case Some(name) => Expr(name)
-    case None       =>
+  collectNames(f.asTerm) match
+    case Some(names) if names.nonEmpty => Expr(names)
+    case _                             =>
       report.errorAndAbort(
-        s"Expected a simple field accessor like _.fieldName, but got: ${f.asTerm.show}",
+        s"Expected a field accessor like _.fieldName, but got: ${f.asTerm.show}",
       )

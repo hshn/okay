@@ -1,6 +1,8 @@
 package yoshi
 
-import yoshi.internal.fieldName
+import yoshi.Violations.Path
+import yoshi.Violations.Paths
+import yoshi.internal.fieldNames
 import yoshi.syntax.ValidatedAs
 import zio.ZIO
 
@@ -14,6 +16,7 @@ import zio.ZIO
   *   (
   *     c.field(_.name).validateAs[String],              // path "name" derived from accessor
   *     c.field(_.age).validateAs[Int],                  // path "age" derived from accessor
+  *     c.field(_.address.zip).validateAs[String],       // path "address.zip" (nested)
   *     c.validateAs[String](_.name),                    // shorthand for field + validateAs
   *     c.field(_.name).at("alias").validateAs[String],  // path overridden to "alias"
   *   ).validateN { ... }
@@ -29,17 +32,17 @@ import zio.ZIO
   */
 final class ValidationCursor[A](private val underlying: A):
 
-  /** Extract a field value and derive the path name from the accessor at compile time.
+  /** Extract a field value and derive the path from the accessor at compile time.
     *
-    * For nested accessors like `_.address.zip`, only the last segment (`"zip"`) is used as the path.
+    * For nested accessors like `_.address.zip`, the full path is preserved.
     *
     * {{{
-    * cursor.field(_.name) // CursorField("Alice", "name")
-    * cursor.field(_.age)  // CursorField("30", "age")
+    * cursor.field(_.name)         // CursorField with path "name"
+    * cursor.field(_.address.zip)  // CursorField with path "address.zip"
     * }}}
     */
   inline def field[B](inline f: A => B): CursorField[B] =
-    new CursorField(f(underlying), fieldName(f))
+    new CursorField(f(underlying), Paths(fieldNames(f).map(Path.Key(_))))
 
   /** Shorthand for `field(f).validateAs[B]` — extracts the field, validates it, and attaches the path in one step.
     *
@@ -57,25 +60,27 @@ final class ValidationCursor[A](private val underlying: A):
   */
 final class CursorValidateAs[A, B](private val underlying: A):
   inline def apply[F](inline f: A => F)(using va: ValidatedAs[F, B]): ZIO[va.Env, Violations[va.Err], B] =
-    f(underlying).validateAs[B].at(fieldName(f))
+    val paths = Paths(fieldNames(f).map(Path.Key(_)))
+    va.run(f(underlying)).mapError(_.asChild(paths))
 
 /** A field value paired with its auto-derived path, obtained via [[ValidationCursor.field]].
   *
   * Call [[validateAs]] to run validation with the path automatically attached, or [[at]] to override the path before validating.
   *
   * {{{
-  * cursor.field(_.name).validateAs[String]                // path "name"
+  * cursor.field(_.name).validateAs[String]                     // path "name"
+  * cursor.field(_.address.zip).validateAs[String]              // path "address.zip"
   * cursor.field(_.name).at("display_name").validateAs[String]  // path "display_name"
   * }}}
   *
   * @tparam B
   *   the field value type
   */
-final class CursorField[B](val value: B, val path: String):
+final class CursorField[B](val value: B, val path: Paths):
 
   /** Validate this field, automatically attaching the derived (or overridden) path to any violations. */
   def validateAs[C](using va: ValidatedAs[B, C]): ZIO[va.Env, Violations[va.Err], C] =
-    value.validateAs[C].at(path)
+    va.run(value).mapError(_.asChild(path))
 
   /** Override the auto-derived path.
     *
@@ -88,4 +93,4 @@ final class CursorField[B](val value: B, val path: String):
     * }}}
     */
   def at(customPath: String): CursorField[B] =
-    new CursorField(value, customPath)
+    new CursorField(value, Paths(List(Path.Key(customPath))))
