@@ -31,7 +31,7 @@ final class ValidationCursor[A](private val underlying: A):
 
   /** Extract a field value and derive the path name from the accessor at compile time.
     *
-    * Only simple field accessors are supported (e.g. `_.name`). Nested paths or computed expressions will produce a compile error.
+    * For nested accessors like `_.address.zip`, only the last segment (`"zip"`) is used as the path.
     *
     * {{{
     * cursor.field(_.name) // CursorField("Alice", "name")

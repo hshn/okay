@@ -2,10 +2,15 @@ package yoshi.internal
 
 import scala.quoted.*
 
-/** Extract the field name from a simple accessor lambda at compile time.
+/** Extract the terminal field name from an accessor lambda at compile time.
   *
-  * Supports only direct field access (e.g. `_.name`). Nested paths, method calls with arguments, or computed expressions will produce a
-  * compile error.
+  * For simple accessors, the field name is extracted directly:
+  * {{{
+  * fieldName(_.name)         // "name"
+  * fieldName(_.address.zip)  // "zip" (last segment only)
+  * }}}
+  *
+  * Method calls with arguments or computed expressions will produce a compile error.
   */
 inline def fieldName[A, B](inline f: A => B): String =
   ${ fieldNameImpl[A, B]('f) }
