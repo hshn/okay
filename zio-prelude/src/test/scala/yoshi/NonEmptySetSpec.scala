@@ -15,7 +15,7 @@ object NonEmptySetSpec extends ZIOSpecDefault {
       }
       test("fails with Violation.Required on empty set") {
         for result <- Set.empty[Int].validateAs[NonEmptySet[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.Required))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
         for result <- Set(42).validateAs[NonEmptySet[Int]]

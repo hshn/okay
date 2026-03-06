@@ -26,7 +26,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
 
         for result <- v.run(Some("ab")).either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("ab", 5)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("ab", 5)))
       }
     }
     suiteAll("seqCanBeValidatedAs") {

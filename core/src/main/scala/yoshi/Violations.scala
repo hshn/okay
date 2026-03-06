@@ -7,10 +7,10 @@ package yoshi
   *
   * {{{
   * // Single violation at root
-  * Violations.single("must not be empty")
+  * Violations.of("must not be empty")
   *
   * // Nested violation under a field path
-  * Violations.single("too short").asChild("name")
+  * Violations.of("too short").asChild("name")
   *
   * // Merge two violation trees
   * nameViolations ++ emailViolations
@@ -51,7 +51,7 @@ case class Violations[+V](
   /** Wrap this violations tree under a full path, nesting one level per segment.
     *
     * {{{
-    * val vs = Violations.single("required")
+    * val vs = Violations.of("required")
     * vs.asChild(Paths(List(Key("address"), Key("zip"))))
     * // equivalent to vs.asChild("zip").asChild("address")
     * // produces: address → zip → "required"
@@ -63,7 +63,7 @@ case class Violations[+V](
   /** Flatten this tree into a list of `(path, violation)` pairs.
     *
     * {{{
-    * val vs = Violations.single("err").asChild("field")
+    * val vs = Violations.of("err").asChild("field")
     * vs.toList  // List((Paths(List(Key("field"))), "err"))
     * }}}
     */
@@ -89,8 +89,8 @@ case class Violations[+V](
 
 object Violations {
 
-  /** Create a [[Violations]] containing a single violation value. */
-  def single[V](value: V): Violations[V] = new Violations[V](Vector(value))
+  /** Create a [[Violations]] containing one or more violation values. */
+  def of[V](v: V, vs: V*): Violations[V] = new Violations[V]((v +: vs).toVector)
 
   private val _empty = Violations[Nothing]()
 

@@ -15,7 +15,7 @@ object NonEmptyListSpec extends ZIOSpecDefault {
       }
       test("fails with Violation.Required on empty list") {
         for result <- List.empty[Int].validateAs[NonEmptyList[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.Required))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
         for result <- List(42).validateAs[NonEmptyList[Int]]
@@ -29,11 +29,11 @@ object NonEmptyListSpec extends ZIOSpecDefault {
       }
       test("fails at index 0 when head transformation fails") {
         for result <- List("abc", "2").validateAs[NonEmptyList[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(0))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(0))
       }
       test("fails at index 1 when tail transformation fails") {
         for result <- List("1", "abc").validateAs[NonEmptyList[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(1))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(1))
       }
     }
     suiteAll("NonEmptyList element transform") {
@@ -43,14 +43,14 @@ object NonEmptyListSpec extends ZIOSpecDefault {
       }
       test("fails at the index of the invalid element") {
         for result <- NonEmptyList("1", "abc").validateAs[NonEmptyList[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(1))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(1))
       }
       test("accumulates violations from multiple invalid elements") {
         for result <- NonEmptyList("abc", "def").validateAs[NonEmptyList[Int]].either
         yield assertTrue(
           result.is(_.left) ==
-            Violations.single(Violation.NonIntegerString("abc")).asChild(0) ++
-            Violations.single(Violation.NonIntegerString("def")).asChild(1),
+            Violations.of(Violation.NonIntegerString("abc")).asChild(0) ++
+            Violations.of(Violation.NonIntegerString("def")).asChild(1),
         )
       }
     }

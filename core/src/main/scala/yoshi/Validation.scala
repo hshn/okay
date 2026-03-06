@@ -140,7 +140,7 @@ object Validation extends ValidationInstances {
     * val positive: Validation[Any, String, Int, Int] =
     *   Validation.instance[Int] { n =>
     *     if (n > 0) ZIO.succeed(n)
-    *     else ZIO.fail(Violations.single("must be positive"))
+    *     else ZIO.fail(Violations.of("must be positive"))
     *   }
     * }}}
     */
@@ -184,7 +184,7 @@ object Validation extends ValidationInstances {
 
   /** A validation that always fails with the given violation. */
   def fail[V](v: V): Validation[Any, V, Any, Nothing] =
-    instance[Any](_ => ZIO.fail(Violations.single(v)))
+    instance[Any](_ => ZIO.fail(Violations.of(v)))
 
   /** Validate that a predicate holds, failing with a constant violation if it does not.
     *
@@ -200,7 +200,7 @@ object Validation extends ValidationInstances {
     if (test(a))
       ZIO.succeed(a)
     else
-      ZIO.fail(Violations.single(f(a)))
+      ZIO.fail(Violations.of(f(a)))
   }
 
   /** Extract a value from `Option`, failing with the given violation if `None`.
@@ -213,7 +213,7 @@ object Validation extends ValidationInstances {
     */
   def required[V, A](error: => V): Validation[Any, V, Option[A], A] =
     instance[Option[A]] { maybeA =>
-      ZIO.fromEither(maybeA.toRight(Violations.single(error)))
+      ZIO.fromEither(maybeA.toRight(Violations.of(error)))
     }
 
   /** Parse a `String` to `Int`, failing with a violation produced from the original string on `NumberFormatException`.
@@ -223,7 +223,7 @@ object Validation extends ValidationInstances {
       ZIO
         .attempt(Integer.parseInt(value))
         .refineOrDie { case _: NumberFormatException =>
-          Violations.single(error(value))
+          Violations.of(error(value))
         }
     }
 
@@ -259,7 +259,7 @@ object Validation extends ValidationInstances {
   def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[Any, V, String, String] =
     instance[String] { value =>
       if (pattern.matches(value)) ZIO.succeed(value)
-      else ZIO.fail(Violations.single(error(value, pattern)))
+      else ZIO.fail(Violations.of(error(value, pattern)))
     }
 
 }
