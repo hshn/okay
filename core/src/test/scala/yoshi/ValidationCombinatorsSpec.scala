@@ -55,14 +55,14 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         }
 
         for result <- (first >> second).run("hi").either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("hi", 10)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("hi", 10)))
       }
       test("fail on second validation") {
         val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Any, Violation, String, String] = Validations.maxLength(2)
 
         for result <- (first >> second).run("hello").either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooLongString("hello", 2)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLongString("hello", 2)))
       }
       test("does not run second validation when first fails") {
         for
@@ -94,7 +94,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val second: Validation[Any, Violation, String, String] = Validations.maxLength(1)
 
         for result <- first.orElse(second).run("hello").either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("hello", 10)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("hello", 10)))
       }
       test("does not run second when first succeeds") {
         for

@@ -27,7 +27,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
       test("always fails with the given violation") {
         val v = Validation.fail[Violation](Violation.Required)
         for result <- v.run("anything").either
-        yield assertTrue(result.is(_.left) == Violations.single[Violation](Violation.Required))
+        yield assertTrue(result.is(_.left) == Violations.of[Violation](Violation.Required))
       }
     }
     suiteAll("contramap") {
@@ -53,7 +53,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
         val v = Validations.minLength(3).mapError(_.toString)
 
         for result <- v.run("ab").either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("ab", 3).toString))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("ab", 3).toString))
       }
       test("preserve success value") {
         val v = Validations.minLength(1).mapError(_.toString)
@@ -68,7 +68,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
               Violations[Violation](
                 values = Vector(Violation.Required),
                 children = Map(
-                  Violations.Path("child") -> Violations.single(Violation.TooShortString(s, 3)),
+                  Violations.Path("child") -> Violations.of(Violation.TooShortString(s, 3)),
                 ),
               ),
             )
@@ -80,7 +80,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
           result.is(_.left) == Violations[String](
             values = Vector(Violation.Required.toString),
             children = Map(
-              Violations.Path("child") -> Violations.single(Violation.TooShortString("ab", 3).toString),
+              Violations.Path("child") -> Violations.of(Violation.TooShortString("ab", 3).toString),
             ),
           ),
         )
@@ -91,7 +91,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
         val v                                                  = (first >> second).mapError(_.toString)
 
         for result <- v.run("hello").either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooLongString("hello", 3).toString))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLongString("hello", 3).toString))
       }
       test("compose with |+|") {
         val v = (Validations.minLength(3) |+| Validations.maxLength(1)).mapError(_.toString)
@@ -121,7 +121,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
       test("fail when Some value is invalid") {
         val v = Validations.minLength(3).optional
         for result <- v.run(Some("ab")).either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooShortString("ab", 3)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("ab", 3)))
       }
       test("compose with map") {
         val v = Validations.minLength(1).optional.map(_.map(_.length))
@@ -136,7 +136,7 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
       test("fail in sequential >> composition") {
         val v = (Validations.minLength(1) >> Validations.maxLength(3)).optional
         for result <- v.run(Some("hello")).either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.TooLongString("hello", 3)))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLongString("hello", 3)))
       }
       test("does not run underlying validation for None") {
         for

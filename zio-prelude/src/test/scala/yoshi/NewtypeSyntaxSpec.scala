@@ -36,7 +36,7 @@ object NewtypeSyntaxSpec extends ZIOSpecDefault {
     test("fails with caller-defined violation when assertion fails") {
       val v = Validation.newtype(PositiveInt)((value, _) => s"$value must be positive")
       for result <- v.run(0).either
-      yield assertTrue(result.is(_.left) == Violations.single("0 must be positive"))
+      yield assertTrue(result.is(_.left) == Violations.of("0 must be positive"))
     }
     test("fails with compound assertion") {
       val v = Validation.newtype(BoundedInt)((value, msg) => s"$value: $msg")

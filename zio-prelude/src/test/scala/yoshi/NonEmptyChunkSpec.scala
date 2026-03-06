@@ -16,7 +16,7 @@ object NonEmptyChunkSpec extends ZIOSpecDefault {
       }
       test("fails with Violation.Required on empty chunk") {
         for result <- Chunk.empty[Int].validateAs[NonEmptyChunk[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.Required))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
         for result <- Chunk(42).validateAs[NonEmptyChunk[Int]]
@@ -30,11 +30,11 @@ object NonEmptyChunkSpec extends ZIOSpecDefault {
       }
       test("fails at index 0 when head transformation fails") {
         for result <- Chunk("abc", "2").validateAs[NonEmptyChunk[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(0))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(0))
       }
       test("fails at index 1 when tail transformation fails") {
         for result <- Chunk("1", "abc").validateAs[NonEmptyChunk[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(1))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(1))
       }
     }
     suiteAll("NonEmptyChunk element transform") {
@@ -44,14 +44,14 @@ object NonEmptyChunkSpec extends ZIOSpecDefault {
       }
       test("fails at the index of the invalid element") {
         for result <- NonEmptyChunk("1", "abc").validateAs[NonEmptyChunk[Int]].either
-        yield assertTrue(result.is(_.left) == Violations.single(Violation.NonIntegerString("abc")).asChild(1))
+        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")).asChild(1))
       }
       test("accumulates violations from multiple invalid elements") {
         for result <- NonEmptyChunk("abc", "def").validateAs[NonEmptyChunk[Int]].either
         yield assertTrue(
           result.is(_.left) ==
-            Violations.single(Violation.NonIntegerString("abc")).asChild(0) ++
-            Violations.single(Violation.NonIntegerString("def")).asChild(1),
+            Violations.of(Violation.NonIntegerString("abc")).asChild(0) ++
+            Violations.of(Violation.NonIntegerString("def")).asChild(1),
         )
       }
     }
