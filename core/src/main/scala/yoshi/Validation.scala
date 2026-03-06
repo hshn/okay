@@ -150,6 +150,34 @@ object Validation extends ValidationInstances {
     def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Impl(f)
   }
 
+  /** Create a [[Validation]] from a function that receives a [[ValidationCursor]].
+    *
+    * The cursor provides field access with automatic path tracking, eliminating the need for manual `.at("field")` calls. The field name is
+    * extracted from the accessor lambda at compile time.
+    *
+    * {{{
+    * val v: Validation[Any, Violation, FormInput, Order] =
+    *   Validation.cursor[FormInput] { c =>
+    *     (
+    *       c.field(_.name).validateAs[String],   // path "name" derived automatically
+    *       c.field(_.age).validateAs[Int],        // path "age" derived automatically
+    *       c.validateAs[String](_.name),          // shorthand for field(_.name).validateAs
+    *     ).validateN { case (name, age, _) => Order(name, age) }
+    *   }
+    * }}}
+    *
+    * @see
+    *   [[ValidationCursor]] for field access and path override
+    * @see
+    *   [[Validation.instance]] for the manual approach using `.at("field")`
+    */
+  def cursor[A] = new CursorPartiallyApplied[A]
+
+  final class CursorPartiallyApplied[A] {
+    def apply[R, V, B](f: ValidationCursor[A] => ZIO[R, Violations[V], B]): Validation[R, V, A, B] =
+      new Impl(a => f(new ValidationCursor(a)))
+  }
+
   /** A validation that always succeeds, passing the input through unchanged. */
   def succeed[A]: Validation[Any, Nothing, A, A] =
     instance[A](a => ZIO.succeed(a))
