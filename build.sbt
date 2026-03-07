@@ -41,3 +41,16 @@ lazy val `zio-prelude` = (project in file("zio-prelude") withId "yoshi-zio-prelu
       "dev.zio" %% "zio-prelude" % "1.0.0-RC46",
     ),
   )
+
+lazy val docs = project
+  .in(file("docs"))
+  .dependsOn(core, `zio-prelude`)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin)
+  .settings(
+    moduleName := "yoshi-docs",
+    mdocIn := baseDirectory.value / "mdoc",
+    mdocOut := (ThisBuild / baseDirectory).value / "website" / "docs",
+    mdocVariables := Map("VERSION" -> version.value),
+    scalacOptions -= "-Werror",
+    publish / skip := true,
+  )
