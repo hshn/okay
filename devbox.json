@@ -4,6 +4,6 @@
     "sbt@1",
     "temurin-bin-25@latest",
     "nodejs@22",
-    "yarn@1"
+    "yarn@1.22.22"
   ]
 }
