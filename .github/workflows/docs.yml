@@ -32,7 +32,7 @@ jobs:
       - run: cd website && yarn install --frozen-lockfile
       - run: sbt docs/mdoc
       - run: cd website && yarn build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: website/build
 
