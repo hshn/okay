@@ -10,7 +10,7 @@ object ValidationProductSpec extends ZIOSpecDefault {
   given childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
     Validation.instance[Dirty.Child] { dirty =>
       (
-        dirty.name.validateAs[String] at "name"
+        dirty.name.validateAs[String].at("name")
       ).validateN { name =>
         Clean.Child(name = name)
       }
