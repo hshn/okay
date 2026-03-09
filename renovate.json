@@ -30,6 +30,11 @@
       "matchManagers": ["devbox"],
       "matchPackageNames": ["sbt"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["scala"],
+      "allowedVersions": "/^3\\.3\\./",
+      "description": "Keep default Scala version on 3.3 LTS"
     }
   ]
 }
