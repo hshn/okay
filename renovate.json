@@ -32,7 +32,7 @@
       "enabled": false
     },
     {
-      "matchPackageNames": ["scala"],
+      "matchPackageNames": ["org.scala-lang:scala3-library_3"],
       "allowedVersions": "/^3\\.3\\./",
       "description": "Keep default Scala version on 3.3 LTS"
     }
