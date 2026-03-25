@@ -14,10 +14,9 @@ import zio.ZIO
   * {{{
   * Validation.cursor[FormInput] { c =>
   *   (
-  *     c.field(_.name).validateAs[String],              // path "name" derived from accessor
-  *     c.field(_.age).validateAs[Int],                  // path "age" derived from accessor
-  *     c.field(_.address.zip).validateAs[String],       // path "address.zip" (nested)
-  *     c.validateAs[String](_.name),                    // shorthand for field + validateAs
+  *     c.validateAs[String](_.name),                    // path "name" derived from accessor
+  *     c.validateAs[Int](_.age),                        // path "age" derived from accessor
+  *     c.validateAs[String](_.address.zip),             // path "address.zip" (nested)
   *     c.field(_.name).at("alias").validateAs[String],  // path overridden to "alias"
   *   ).validateN { ... }
   * }
@@ -44,17 +43,19 @@ final class ValidationCursor[A](private val underlying: A):
   inline def field[B](inline f: A => B): CursorField[B] =
     new CursorField(f(underlying), Paths(fieldNames(f).map(Path.Key(_))))
 
-  /** Shorthand for `field(f).validateAs[B]` — extracts the field, validates it, and attaches the path in one step.
+  /** Validate a field in one step — extracts the field, validates it, and attaches the path.
     *
     * {{{
-    * // These are equivalent:
     * c.validateAs[String](_.name)
-    * c.field(_.name).validateAs[String]
+    * c.validateAs[Int](_.age)
+    * c.validateAs[String](_.address.zip)  // nested paths supported
     * }}}
+    *
+    * Equivalent to `c.field(_.name).validateAs[String]`. Use [[field]] when you need to override the path with `.at()`.
     */
   inline def validateAs[B] = new CursorValidateAs[A, B](underlying)
 
-/** Intermediate class for the `cursor.validateAs[B](_.field)` shorthand.
+/** Intermediate class for `cursor.validateAs[B](_.field)`.
   *
   * Not intended for direct use; obtained via [[ValidationCursor.validateAs]].
   */

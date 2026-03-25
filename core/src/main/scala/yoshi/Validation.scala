@@ -159,10 +159,9 @@ object Validation extends ValidationInstances {
     * val v: Validation[Any, Violation, FormInput, Order] =
     *   Validation.cursor[FormInput] { c =>
     *     (
-    *       c.field(_.name).validateAs[String],   // path "name" derived automatically
-    *       c.field(_.age).validateAs[Int],        // path "age" derived automatically
-    *       c.validateAs[String](_.name),          // shorthand for field(_.name).validateAs
-    *     ).validateN { case (name, age, _) => Order(name, age) }
+    *       c.validateAs[String](_.name),   // path "name" derived automatically
+    *       c.validateAs[Int](_.age),        // path "age" derived automatically
+    *     ).validateN { case (name, age) => Order(name, age) }
     *   }
     * }}}
     *
