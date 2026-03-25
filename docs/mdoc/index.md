@@ -55,7 +55,7 @@ object Order:
 given Validation[Any, Violation, FormInput.Item, Order.Item] =
   Validation.cursor[FormInput.Item] { c =>
     (
-      c.field(_.label).validateAs[String]
+      c.validateAs[String](_.label)
     ).validateN { label =>
       Order.Item(label)
     }
@@ -64,9 +64,9 @@ given Validation[Any, Violation, FormInput.Item, Order.Item] =
 val validation: Validation[Any, Violation, FormInput, Order] =
   Validation.cursor[FormInput] { c =>
     (
-      c.field(_.name).validateAs[String],
-      c.field(_.age).validateAs[Int],
-      c.field(_.items).validateAs[List[Order.Item]],
+      c.validateAs[String](_.name),
+      c.validateAs[Int](_.age),
+      c.validateAs[List[Order.Item]](_.items),
     ).validateN { case (name, age, items) =>
       Order(name, age, items)
     }
@@ -75,29 +75,19 @@ val validation: Validation[Any, Violation, FormInput, Order] =
 
 The cursor derives field names from accessor lambdas at compile time — no manual `.at("field")` strings needed.
 
-For cases where the path should differ from the field name, use `.at()` to override:
+When the path should differ from the field name, use `field()` with `.at()` to override:
 
 ```scala mdoc:silent
 val renamed: Validation[Any, Violation, FormInput, Order] =
   Validation.cursor[FormInput] { c =>
     (
       c.field(_.name).at("display_name").validateAs[String],
-      c.field(_.age).validateAs[Int],
-      c.field(_.items).validateAs[List[Order.Item]],
+      c.validateAs[Int](_.age),
+      c.validateAs[List[Order.Item]](_.items),
     ).validateN { case (name, age, items) =>
       Order(name, age, items)
     }
   }
-```
-
-A shorthand is also available:
-
-```scala mdoc:compile-only
-// These are equivalent:
-Validation.cursor[FormInput] { c =>
-  c.field(_.name).validateAs[String]
-  c.validateAs[String](_.name)
-}
 ```
 
 ## Path-aware error accumulation
