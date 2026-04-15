@@ -4,7 +4,6 @@ import yoshi.Violations.Path
 import yoshi.Violations.Paths
 import yoshi.internal.fieldNames
 import yoshi.syntax.ValidatedAs
-import zio.ZIO
 
 /** A cursor over a value of type `A` that provides field access with automatic path tracking.
   *
@@ -22,8 +21,6 @@ import zio.ZIO
   * }
   * }}}
   *
-  * @tparam A
-  *   the input type to extract fields from
   * @see
   *   [[Validation.cursor]] for the factory method
   * @see
@@ -60,9 +57,9 @@ final class ValidationCursor[A](private val underlying: A):
   * Not intended for direct use; obtained via [[ValidationCursor.validateAs]].
   */
 final class CursorValidateAs[A, B](private val underlying: A):
-  inline def apply[F](inline f: A => F)(using va: ValidatedAs[F, B]): ZIO[va.Env, Violations[va.Err], B] =
+  inline def apply[F](inline f: A => F)(using va: ValidatedAs[F, B]): Either[Violations[va.Err], B] =
     val paths = Paths(fieldNames(f).map(Path.Key(_)))
-    va.run(f(underlying)).mapError(_.asChild(paths))
+    va.run(f(underlying)).left.map(_.asChild(paths))
 
 /** A field value paired with its auto-derived path, obtained via [[ValidationCursor.field]].
   *
@@ -80,8 +77,8 @@ final class CursorValidateAs[A, B](private val underlying: A):
 final class CursorField[B](val value: B, val path: Paths):
 
   /** Validate this field, automatically attaching the derived (or overridden) path to any violations. */
-  def validateAs[C](using va: ValidatedAs[B, C]): ZIO[va.Env, Violations[va.Err], C] =
-    va.run(value).mapError(_.asChild(path))
+  def validateAs[C](using va: ValidatedAs[B, C]): Either[Violations[va.Err], C] =
+    va.run(value).left.map(_.asChild(path))
 
   /** Override the auto-derived path.
     *
