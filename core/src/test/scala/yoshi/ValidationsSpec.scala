@@ -8,109 +8,79 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("required() can extract from Option") {
       test("success") {
         val validation = Validations.required[String]
-
-        for result <- validation.run(Some("hello"))
-        yield assertTrue(result == "hello")
+        assertTrue(validation.run(Some("hello")) == Right("hello"))
       }
       test("failure") {
         val validation = Validations.required[String]
-
-        for result <- validation.run(None).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.Required))
+        assertTrue(validation.run(None) == Left(Violations.of(Violation.Required)))
       }
     }
     suiteAll("parseInt() can parse string to int") {
       test("success") {
         val validation = Validations.parseInt
-
-        for result <- validation.run("42")
-        yield assertTrue(result == 42)
+        assertTrue(validation.run("42") == Right(42))
       }
       test("failure") {
         val validation = Validations.parseInt
-
-        for result <- validation.run("abc").either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonIntegerString("abc")))
+        assertTrue(validation.run("abc") == Left(Violations.of(Violation.NonIntegerString("abc"))))
       }
     }
     suiteAll("maxLength() can test string length") {
       test("success") {
         val validation = Validations.maxLength(max = 4)
         val value      = "a".repeat(4)
-
-        for result <- validation.run(value)
-        yield assertTrue(result == value)
+        assertTrue(validation.run(value) == Right(value))
       }
       test("failure") {
         val validation = Validations.maxLength(max = 4)
         val value      = "a".repeat(5)
-
-        for result <- validation.run(value).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLongString(value, maxLength = 4)))
+        assertTrue(validation.run(value) == Left(Violations.of(Violation.TooLongString(value, maxLength = 4))))
       }
     }
     suiteAll("minLength() can test string length") {
       test("success") {
         val validation = Validations.minLength(min = 4)
         val value      = "a".repeat(4)
-
-        for result <- validation.run(value)
-        yield assertTrue(result == value)
+        assertTrue(validation.run(value) == Right(value))
       }
       test("failure") {
         val validation = Validations.minLength(min = 4)
         val value      = "a".repeat(3)
-
-        for result <- validation.run(value).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString(value, minLength = 4)))
+        assertTrue(validation.run(value) == Left(Violations.of(Violation.TooShortString(value, minLength = 4))))
       }
     }
     suiteAll("min() can test minimum value") {
       test("success") {
         val validation = Validations.min(n = 5)
-
-        for result <- validation.run(5)
-        yield assertTrue(result == 5)
+        assertTrue(validation.run(5) == Right(5))
       }
       test("failure") {
         val validation = Validations.min(n = 5)
-
-        for result <- validation.run(4).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooSmall(value = 4, min = 5)))
+        assertTrue(validation.run(4) == Left(Violations.of(Violation.TooSmall(value = 4, min = 5))))
       }
     }
     suiteAll("max() can test maximum value") {
       test("success") {
         val validation = Validations.max(n = 10)
-
-        for result <- validation.run(10)
-        yield assertTrue(result == 10)
+        assertTrue(validation.run(10) == Right(10))
       }
       test("failure") {
         val validation = Validations.max(n = 10)
-
-        for result <- validation.run(11).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLarge(value = 11, max = 10)))
+        assertTrue(validation.run(11) == Left(Violations.of(Violation.TooLarge(value = 11, max = 10))))
       }
     }
     suiteAll("positive() can test positive value") {
       test("success") {
         val validation = Validations.positive
-
-        for result <- validation.run(1)
-        yield assertTrue(result == 1)
+        assertTrue(validation.run(1) == Right(1))
       }
       test("failure with zero") {
         val validation = Validations.positive
-
-        for result <- validation.run(0).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonPositive(value = 0)))
+        assertTrue(validation.run(0) == Left(Violations.of(Violation.NonPositive(value = 0))))
       }
       test("failure with negative") {
         val validation = Validations.positive
-
-        for result <- validation.run(-1).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.NonPositive(value = -1)))
+        assertTrue(validation.run(-1) == Left(Violations.of(Violation.NonPositive(value = -1))))
       }
     }
     suiteAll("matches() can test with regex") {
@@ -118,17 +88,13 @@ object ValidationsSpec extends ZIOSpecDefault {
         val pattern    = "^abc$".r
         val validation = Validations.matches(pattern)
         val value      = "abc"
-
-        for result <- validation.run(value)
-        yield assertTrue(result == value)
+        assertTrue(validation.run(value) == Right(value))
       }
       test("failure") {
         val pattern    = "^abc$".r
         val validation = Validations.matches(pattern)
         val value      = "abcd"
-
-        for result <- validation.run(value).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.Unmatched(value, pattern)))
+        assertTrue(validation.run(value) == Left(Violations.of(Violation.Unmatched(value, pattern))))
       }
     }
   }
