@@ -2,8 +2,8 @@ package yoshi.defaults
 
 import yoshi.Validation
 
-implicit def optionCanBeDefined[A]: Validation[Any, Violation, Option[A], A] =
+implicit def optionCanBeDefined[A]: Validation[Violation, Option[A], A] =
   Validations.required
 
-implicit val stringCanBeInt: Validation[Any, Violation, String, Int] =
+implicit val stringCanBeInt: Validation[Violation, String, Int] =
   Validations.parseInt
