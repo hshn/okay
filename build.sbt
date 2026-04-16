@@ -21,6 +21,7 @@ lazy val root = (project in file(".") withId "yoshi")
   )
   .aggregate(
     core,
+    `zio-prelude`,
   )
 
 lazy val core = (project in file("core"))
