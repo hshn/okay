@@ -2,8 +2,7 @@ package yoshi
 
 trait ValidationInstances {
 
-  /** Automatically lifts a `Validation[V, A, B]` to `Validation[V, Option[A], Option[B]]`. `None` passes through; `Some(a)` is
-    * validated.
+  /** Automatically lifts a `Validation[V, A, B]` to `Validation[V, Option[A], Option[B]]`. `None` passes through; `Some(a)` is validated.
     */
   given optionCanBeValidatedAs[V, A, B](using validation: Validation[V, A, B]): Validation[V, Option[A], Option[B]] =
     validation.optional

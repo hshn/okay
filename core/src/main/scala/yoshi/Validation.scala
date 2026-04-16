@@ -110,7 +110,7 @@ sealed abstract class Validation[+V, -A, +B] { self =>
   def orElse[V1 >: V, A1 <: A, B1 >: B](that: Validation[V1, A1, B1]): Validation[V1, A1, B1] =
     Validation.instance[A1] { a =>
       self.run(a) match {
-        case Right(b) => Right(b)
+        case Right(b)         => Right(b)
         case Left(firstError) =>
           that.run(a).left.map(_ => firstError)
       }
