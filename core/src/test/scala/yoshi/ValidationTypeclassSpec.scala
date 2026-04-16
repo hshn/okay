@@ -11,19 +11,19 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        assertTrue(v.run(Some("hello")) == Right(Some("hello")))
+        assertTrue(v.run(Some("hello")).is(_.right) == Some("hello"))
       }
       test("pass through None") {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        assertTrue(v.run(None) == Right(None))
+        assertTrue(v.run(None).is(_.right) == None)
       }
       test("fail when Some value is invalid") {
         given Validation[Violation, String, String] = Validations.minLength(5)
         val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        assertTrue(v.run(Some("ab")) == Left(Violations.of(Violation.TooShortString("ab", 5))))
+        assertTrue(v.run(Some("ab")).is(_.left) == Violations.of(Violation.TooShortString("ab", 5)))
       }
     }
     suiteAll("seqCanBeValidatedAs") {
@@ -31,13 +31,13 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        assertTrue(v.run(Seq("a", "bb", "ccc")) == Right(Seq("a", "bb", "ccc")))
+        assertTrue(v.run(Seq("a", "bb", "ccc")).is(_.right) == Seq("a", "bb", "ccc"))
       }
       test("succeed with empty Seq") {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        assertTrue(v.run(Seq.empty) == Right(Seq.empty))
+        assertTrue(v.run(Seq.empty).is(_.right) == Seq.empty)
       }
       test("accumulate violations with indices") {
         given Validation[Violation, String, String] = Validations.minLength(3)
@@ -50,7 +50,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(v.run(Seq("ab", "hello", "x")) == Left(expectedViolations))
+        assertTrue(v.run(Seq("ab", "hello", "x")).is(_.left) == expectedViolations)
       }
     }
     suiteAll("listCanBeValidatedAs") {
@@ -58,7 +58,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, List[String], List[String]]]
 
-        assertTrue(v.run(List("a", "bb", "ccc")) == Right(List("a", "bb", "ccc")))
+        assertTrue(v.run(List("a", "bb", "ccc")).is(_.right) == List("a", "bb", "ccc"))
       }
       test("accumulate violations with indices") {
         given Validation[Violation, String, String] = Validations.minLength(3)
@@ -71,7 +71,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(v.run(List("ab", "hello", "x")) == Left(expectedViolations))
+        assertTrue(v.run(List("ab", "hello", "x")).is(_.left) == expectedViolations)
       }
     }
     suiteAll("mapCanBeValidatedAs") {
@@ -83,7 +83,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           "b" -> "yy",
         )
 
-        assertTrue(v.run(input) == Right(input))
+        assertTrue(v.run(input).is(_.right) == input)
       }
       test("accumulate violations with keys") {
         given Validation[Violation, String, String] = Validations.minLength(3)
@@ -96,7 +96,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(v.run(Map("a" -> "ab", "b" -> "hello", "c" -> "x")) == Left(expectedViolations))
+        assertTrue(v.run(Map("a" -> "ab", "b" -> "hello", "c" -> "x")).is(_.left) == expectedViolations)
       }
     }
   }

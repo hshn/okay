@@ -60,7 +60,7 @@ object CursorSpec extends ZIOSpecDefault {
           items = List(Output.Item("item1"), Output.Item("item2")),
         )
 
-        assertTrue(validation.run(input) == Right(expected))
+        assertTrue(validation.run(input).is(_.right) == expected)
       }
 
       test("accumulates violations with correct paths") {
@@ -83,7 +83,7 @@ object CursorSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(validation.run(input) == Left(expected))
+        assertTrue(validation.run(input).is(_.left) == expected)
       }
 
       test("produces same result as manual .at() calls") {
@@ -124,7 +124,7 @@ object CursorSpec extends ZIOSpecDefault {
             ),
           ),
         )
-        assertTrue(v.run(input) == Left(expected))
+        assertTrue(v.run(input).is(_.left) == expected)
       }
     }
 
@@ -140,7 +140,7 @@ object CursorSpec extends ZIOSpecDefault {
             Violations.Path("display_name") -> Violations(Vector(Violation.Required)),
           ),
         )
-        assertTrue(v.run(Input(name = None, age = "", items = Nil, address = Input.Address(None))) == Left(expected))
+        assertTrue(v.run(Input(name = None, age = "", items = Nil, address = Input.Address(None))).is(_.left) == expected)
       }
     }
 

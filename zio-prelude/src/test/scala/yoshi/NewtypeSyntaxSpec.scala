@@ -25,15 +25,17 @@ object NewtypeSyntaxSpec extends ZIOSpecDefault {
   override def spec = suiteAll("Validation.newtype") {
     test("succeeds for Newtype with default assertion") {
       val v = Validation.newtype(WrappedString)((value, msg) => s"$value: $msg")
-      assertTrue(v.run("anything") == Right(WrappedString("anything")))
+      assertTrue(
+        v.run("anything").is(_.right) == WrappedString("anything"),
+      )
     }
     test("succeeds when custom assertion passes") {
       val v = Validation.newtype(PositiveInt)((value, _) => s"$value must be positive")
-      assertTrue(v.run(5) == Right(PositiveInt(5)))
+      assertTrue(v.run(5).is(_.right) == PositiveInt(5))
     }
     test("fails with caller-defined violation when assertion fails") {
       val v = Validation.newtype(PositiveInt)((value, _) => s"$value must be positive")
-      assertTrue(v.run(0) == Left(Violations.of("0 must be positive")))
+      assertTrue(v.run(0).is(_.left) == Violations.of("0 must be positive"))
     }
     test("fails with compound assertion") {
       val v                = Validation.newtype(BoundedInt)((value, msg) => s"$value: $msg")
@@ -43,7 +45,7 @@ object NewtypeSyntaxSpec extends ZIOSpecDefault {
     test("composes with >> for String to newtype") {
       val v: Validation[Violation, String, PositiveInt] =
         Validations.parseInt >> Validation.newtype(PositiveInt)((value, _) => Violation.NonPositive(value))
-      assertTrue(v.run("42") == Right(PositiveInt(42)))
+      assertTrue(v.run("42").is(_.right) == PositiveInt(42))
     }
   }
 }

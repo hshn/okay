@@ -11,51 +11,47 @@ object NonEmptyChunkSpec extends ZIOSpecDefault {
   override def spec = suiteAll("NonEmptyChunk") {
     suiteAll("Chunk → NonEmptyChunk") {
       test("succeeds with non-empty chunk") {
-        assertTrue(Chunk(1, 2, 3).validateAs[NonEmptyChunk[Int]] == Right(NonEmptyChunk(1, 2, 3)))
+        assertTrue(Chunk(1, 2, 3).validateAs[NonEmptyChunk[Int]].is(_.right) == NonEmptyChunk(1, 2, 3))
       }
       test("fails with Violation.Required on empty chunk") {
-        assertTrue(Chunk.empty[Int].validateAs[NonEmptyChunk[Int]] == Left(Violations.of(Violation.Required)))
+        assertTrue(Chunk.empty[Int].validateAs[NonEmptyChunk[Int]].is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
-        assertTrue(Chunk(42).validateAs[NonEmptyChunk[Int]] == Right(NonEmptyChunk(42)))
+        assertTrue(Chunk(42).validateAs[NonEmptyChunk[Int]].is(_.right) == NonEmptyChunk(42))
       }
     }
     suiteAll("Chunk → NonEmptyChunk (element transform)") {
       test("transforms all elements") {
-        assertTrue(Chunk("1", "2", "3").validateAs[NonEmptyChunk[Int]] == Right(NonEmptyChunk(1, 2, 3)))
+        assertTrue(Chunk("1", "2", "3").validateAs[NonEmptyChunk[Int]].is(_.right) == NonEmptyChunk(1, 2, 3))
       }
       test("fails at index 0 when head transformation fails") {
         assertTrue(
-          Chunk("abc", "2").validateAs[NonEmptyChunk[Int]] == Left(
+          Chunk("abc", "2").validateAs[NonEmptyChunk[Int]].is(_.left) ==
             Violations.of(Violation.NonIntegerString("abc")).asChild(0),
-          ),
         )
       }
       test("fails at index 1 when tail transformation fails") {
         assertTrue(
-          Chunk("1", "abc").validateAs[NonEmptyChunk[Int]] == Left(
+          Chunk("1", "abc").validateAs[NonEmptyChunk[Int]].is(_.left) ==
             Violations.of(Violation.NonIntegerString("abc")).asChild(1),
-          ),
         )
       }
     }
     suiteAll("NonEmptyChunk element transform") {
       test("transforms all elements") {
-        assertTrue(NonEmptyChunk("1", "2", "3").validateAs[NonEmptyChunk[Int]] == Right(NonEmptyChunk(1, 2, 3)))
+        assertTrue(NonEmptyChunk("1", "2", "3").validateAs[NonEmptyChunk[Int]].is(_.right) == NonEmptyChunk(1, 2, 3))
       }
       test("fails at the index of the invalid element") {
         assertTrue(
-          NonEmptyChunk("1", "abc").validateAs[NonEmptyChunk[Int]] == Left(
+          NonEmptyChunk("1", "abc").validateAs[NonEmptyChunk[Int]].is(_.left) ==
             Violations.of(Violation.NonIntegerString("abc")).asChild(1),
-          ),
         )
       }
       test("accumulates violations from multiple invalid elements") {
         assertTrue(
-          NonEmptyChunk("abc", "def").validateAs[NonEmptyChunk[Int]] == Left(
+          NonEmptyChunk("abc", "def").validateAs[NonEmptyChunk[Int]].is(_.left) ==
             Violations.of(Violation.NonIntegerString("abc")).asChild(0) ++
-              Violations.of(Violation.NonIntegerString("def")).asChild(1),
-          ),
+            Violations.of(Violation.NonIntegerString("def")).asChild(1),
         )
       }
     }

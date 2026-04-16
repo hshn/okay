@@ -16,13 +16,13 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(validation.run("ab") == Left(expectedViolations))
+        assertTrue(validation.run("ab").is(_.left) == expectedViolations)
       }
       test("result value when valid") {
         val validation = (Validations.minLength(1) |+| Validations.maxLength(2))
           .map(_.length)
 
-        assertTrue(validation.run("ab") == Right(2))
+        assertTrue(validation.run("ab").is(_.right) == 2)
       }
       test("return left value when both succeed") {
         val left: Validation[Violation, String, String] =
@@ -30,7 +30,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val right: Validation[Violation, String, String] =
           Validation.instance[String](s => Right(s.toLowerCase))
 
-        assertTrue((left |+| right).run("Ab") == Right("AB"))
+        assertTrue((left |+| right).run("Ab").is(_.right) == "AB")
       }
     }
     suiteAll(">>") {
@@ -40,7 +40,7 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
           Right(s.length)
         }
 
-        assertTrue((first >> second).run("hello") == Right(5))
+        assertTrue((first >> second).run("hello").is(_.right) == 5)
       }
       test("fail on first validation") {
         val first: Validation[Violation, String, String] = Validations.minLength(10)
@@ -48,13 +48,13 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
           Right(s.length)
         }
 
-        assertTrue((first >> second).run("hi") == Left(Violations.of(Violation.TooShortString("hi", 10))))
+        assertTrue((first >> second).run("hi").is(_.left) == Violations.of(Violation.TooShortString("hi", 10)))
       }
       test("fail on second validation") {
         val first: Validation[Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Violation, String, String] = Validations.maxLength(2)
 
-        assertTrue((first >> second).run("hello") == Left(Violations.of(Violation.TooLongString("hello", 2))))
+        assertTrue((first >> second).run("hello").is(_.left) == Violations.of(Violation.TooLongString("hello", 2)))
       }
       test("does not run second validation when first fails") {
         var called = false
@@ -69,26 +69,26 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val first: Validation[Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Violation, String, String] = Validations.minLength(5)
 
-        assertTrue(first.orElse(second).run("ab") == Right("ab"))
+        assertTrue(first.orElse(second).run("ab").is(_.right) == "ab")
       }
       test("fall back to second when first fails") {
         val first: Validation[Violation, String, String]  = Validations.minLength(10)
         val second: Validation[Violation, String, String] = Validations.minLength(1)
 
-        assertTrue(first.orElse(second).run("hello") == Right("hello"))
+        assertTrue(first.orElse(second).run("hello").is(_.right) == "hello")
       }
       test("return first violation when both fail") {
         val first: Validation[Violation, String, String]  = Validations.minLength(10)
         val second: Validation[Violation, String, String] = Validations.maxLength(1)
 
-        assertTrue(first.orElse(second).run("hello") == Left(Violations.of(Violation.TooShortString("hello", 10))))
+        assertTrue(first.orElse(second).run("hello").is(_.left) == Violations.of(Violation.TooShortString("hello", 10)))
       }
       test("does not run second when first succeeds") {
         var called = false
         val first  = Validation.instance[String](s => Right(s))
         val second = Validation.instance[String] { _ => called = true; Right("fallback") }
         val result = first.orElse(second).run("ok")
-        assertTrue(result == Right("ok"), !called)
+        assertTrue(result.is(_.right) == "ok", !called)
       }
     }
   }

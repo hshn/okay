@@ -77,7 +77,7 @@ object ValidationProductSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(validation.run(invalid) == Left(expectedViolations))
+        assertTrue(validation.run(invalid).is(_.left) == expectedViolations)
       }
       test("result transformed object when valid") {
         val valid = Dirty(
@@ -110,7 +110,7 @@ object ValidationProductSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(validation.run(valid) == Right(expectedObject))
+        assertTrue(validation.run(valid).is(_.right) == expectedObject)
       }
     }
   }

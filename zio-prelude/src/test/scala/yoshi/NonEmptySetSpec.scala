@@ -10,18 +10,18 @@ object NonEmptySetSpec extends ZIOSpecDefault {
   override def spec = suiteAll("NonEmptySet") {
     suiteAll("Set → NonEmptySet") {
       test("succeeds with non-empty set") {
-        assertTrue(Set(1, 2, 3).validateAs[NonEmptySet[Int]] == Right(NonEmptySet(1, 2, 3)))
+        assertTrue(Set(1, 2, 3).validateAs[NonEmptySet[Int]].is(_.right) == NonEmptySet(1, 2, 3))
       }
       test("fails with Violation.Required on empty set") {
-        assertTrue(Set.empty[Int].validateAs[NonEmptySet[Int]] == Left(Violations.of(Violation.Required)))
+        assertTrue(Set.empty[Int].validateAs[NonEmptySet[Int]].is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
-        assertTrue(Set(42).validateAs[NonEmptySet[Int]] == Right(NonEmptySet(42)))
+        assertTrue(Set(42).validateAs[NonEmptySet[Int]].is(_.right) == NonEmptySet(42))
       }
     }
     suiteAll("Set → NonEmptySet (element transform)") {
       test("transforms all elements") {
-        assertTrue(Set("1", "2", "3").validateAs[NonEmptySet[Int]] == Right(NonEmptySet(1, 2, 3)))
+        assertTrue(Set("1", "2", "3").validateAs[NonEmptySet[Int]].is(_.right) == NonEmptySet(1, 2, 3))
       }
       test("fails only for invalid elements in a mixed set") {
         val Left(result) = Set("abc", "2").validateAs[NonEmptySet[Int]]: @unchecked
@@ -34,7 +34,7 @@ object NonEmptySetSpec extends ZIOSpecDefault {
     }
     suiteAll("NonEmptySet element transform") {
       test("transforms all elements") {
-        assertTrue(NonEmptySet("1", "2", "3").validateAs[NonEmptySet[Int]] == Right(NonEmptySet(1, 2, 3)))
+        assertTrue(NonEmptySet("1", "2", "3").validateAs[NonEmptySet[Int]].is(_.right) == NonEmptySet(1, 2, 3))
       }
       test("fails when element transformation fails") {
         val Left(result) = NonEmptySet("abc").validateAs[NonEmptySet[Int]]: @unchecked
