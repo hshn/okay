@@ -2,7 +2,7 @@
 target/
 .devbox/
 .worktrees/
-website/node_modules/
+node_modules/
 website/build/
 website/docs/
 website/.docusaurus/
