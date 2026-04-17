@@ -2,7 +2,7 @@ package yoshi.syntax
 
 import yoshi.Violations
 
-/** Provides `.validateN(f)` for parallel validation of multiple `Either` values.
+/** Provides `.validateN(f)` for error-accumulating validation of multiple `Either` values.
   *
   * {{{
   * (

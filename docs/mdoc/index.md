@@ -129,7 +129,7 @@ val nonEmpty: Validation[String, String, String] =
 val maxLen: Validation[String, String, String] =
   Validation.maxLength(100)((_, _) => "too long")
 
-// Parallel — accumulates all violations
+// Accumulating — collects all violations
 val both = nonEmpty |+| maxLen
 
 // Sequential — short-circuits on first failure

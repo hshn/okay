@@ -4,8 +4,7 @@ import scala.util.matching.Regex
 
 /** A composable validation that transforms a value of type `A` into `B`, accumulating violations of type `V` on failure.
   *
-  * Validations can be composed sequentially with `>>` (short-circuit on first failure) or in parallel with `|+|` (accumulate all
-  * violations).
+  * Validations can be composed sequentially with `>>` (short-circuit on first failure) or with `|+|` (accumulate all violations).
   *
   * {{{
   * val nonEmpty: Validation[String, String, String] =
@@ -14,7 +13,7 @@ import scala.util.matching.Regex
   * val maxLen: Validation[String, String, String] =
   *   Validation.ensure("too long")(_.length <= 100)
   *
-  * // Parallel: collects violations from both
+  * // Accumulating: collects violations from both
   * val combined = nonEmpty |+| maxLen
   *
   * // Sequential: short-circuits on first failure
@@ -66,7 +65,7 @@ sealed abstract class Validation[+V, -A, +B] { self =>
       }
     }
 
-  /** Parallel composition: run both validations on the same input and accumulate all violations.
+  /** Accumulating composition: run both validations on the same input and accumulate all violations.
     *
     * If both validations succeed, the result of `this` is returned.
     *
