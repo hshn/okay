@@ -60,7 +60,11 @@ object CursorSpec extends ZIOSpecDefault {
           items = List(Output.Item("item1"), Output.Item("item2")),
         )
 
-        assertTrue(validation.run(input).is(_.right) == expected)
+        for {
+          result <- validation.run(input)
+        } yield {
+          assertTrue(result == expected)
+        }
       }
 
       test("accumulates violations with correct paths") {

@@ -7,15 +7,27 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
   override def spec = suiteAll("Validation transforms") {
     suiteAll("succeed") {
       test("returns the input unchanged") {
-        assertTrue(Validation.succeed[String].run("hello").is(_.right) == "hello")
+        for {
+          result <- Validation.succeed[String].run("hello")
+        } yield {
+          assertTrue(result == "hello")
+        }
       }
       test("is right identity for >>") {
         val v = Validations.minLength(1)
-        assertTrue((v >> Validation.succeed).run("ab").is(_.right) == "ab")
+        for {
+          result <- (v >> Validation.succeed).run("ab")
+        } yield {
+          assertTrue(result == "ab")
+        }
       }
       test("is left identity for >>") {
         val v = Validations.minLength(1)
-        assertTrue((Validation.succeed >> v).run("ab").is(_.right) == "ab")
+        for {
+          result <- (Validation.succeed >> v).run("ab")
+        } yield {
+          assertTrue(result == "ab")
+        }
       }
     }
     suiteAll("fail") {
@@ -30,7 +42,11 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
         val nameValidation: Validation[Violation, NameInput, String] =
           nonEmpty.contramap(_.name.getOrElse(""))
 
-        assertTrue(nameValidation.run(NameInput(name = Some("Alice"))).is(_.right) == "Alice")
+        for {
+          result <- nameValidation.run(NameInput(name = Some("Alice")))
+        } yield {
+          assertTrue(result == "Alice")
+        }
       }
       test("propagate violations from adapted input") {
         val minLength3: Validation[Violation, String, String]        = Validations.minLength(3)
@@ -49,7 +65,11 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
       test("preserve success value") {
         val v = Validations.minLength(1).mapError(_.toString)
 
-        assertTrue(v.run("hello").is(_.right) == "hello")
+        for {
+          result <- v.run("hello")
+        } yield {
+          assertTrue(result == "hello")
+        }
       }
       test("transform nested violations preserving structure") {
         val v = Validation
@@ -99,11 +119,19 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
     suiteAll("optional") {
       test("pass through None as success") {
         val v = Validations.minLength(3).optional
-        assertTrue(v.run(None).is(_.right) == None)
+        for {
+          result <- v.run(None)
+        } yield {
+          assertTrue(result == None)
+        }
       }
       test("validate Some value and wrap result in Some") {
         val v = Validations.minLength(3).optional
-        assertTrue(v.run(Some("hello")).is(_.right) == Some("hello"))
+        for {
+          result <- v.run(Some("hello"))
+        } yield {
+          assertTrue(result == Some("hello"))
+        }
       }
       test("fail when Some value is invalid") {
         val v = Validations.minLength(3).optional
@@ -111,11 +139,19 @@ object ValidationTransformsSpec extends ZIOSpecDefault {
       }
       test("compose with map") {
         val v = Validations.minLength(1).optional.map(_.map(_.length))
-        assertTrue(v.run(Some("hello")).is(_.right) == Some(5))
+        for {
+          result <- v.run(Some("hello"))
+        } yield {
+          assertTrue(result == Some(5))
+        }
       }
       test("compose with sequential >>") {
         val v = (Validations.minLength(1) >> Validations.maxLength(5)).optional
-        assertTrue(v.run(Some("abc")).is(_.right) == Some("abc"))
+        for {
+          result <- v.run(Some("abc"))
+        } yield {
+          assertTrue(result == Some("abc"))
+        }
       }
       test("fail in sequential >> composition") {
         val v = (Validations.minLength(1) >> Validations.maxLength(3)).optional

@@ -22,7 +22,11 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val validation = (Validations.minLength(1) |+| Validations.maxLength(2))
           .map(_.length)
 
-        assertTrue(validation.run("ab").is(_.right) == 2)
+        for {
+          result <- validation.run("ab")
+        } yield {
+          assertTrue(result == 2)
+        }
       }
       test("return left value when both succeed") {
         val left: Validation[Violation, String, String] =
@@ -30,7 +34,11 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val right: Validation[Violation, String, String] =
           Validation.instance[String](s => Right(s.toLowerCase))
 
-        assertTrue((left |+| right).run("Ab").is(_.right) == "AB")
+        for {
+          result <- (left |+| right).run("Ab")
+        } yield {
+          assertTrue(result == "AB")
+        }
       }
     }
     suiteAll(">>") {
@@ -40,7 +48,11 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
           Right(s.length)
         }
 
-        assertTrue((first >> second).run("hello").is(_.right) == 5)
+        for {
+          result <- (first >> second).run("hello")
+        } yield {
+          assertTrue(result == 5)
+        }
       }
       test("fail on first validation") {
         val first: Validation[Violation, String, String] = Validations.minLength(10)
@@ -69,13 +81,21 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val first: Validation[Violation, String, String]  = Validations.minLength(1)
         val second: Validation[Violation, String, String] = Validations.minLength(5)
 
-        assertTrue(first.orElse(second).run("ab").is(_.right) == "ab")
+        for {
+          result <- first.orElse(second).run("ab")
+        } yield {
+          assertTrue(result == "ab")
+        }
       }
       test("fall back to second when first fails") {
         val first: Validation[Violation, String, String]  = Validations.minLength(10)
         val second: Validation[Violation, String, String] = Validations.minLength(1)
 
-        assertTrue(first.orElse(second).run("hello").is(_.right) == "hello")
+        for {
+          result <- first.orElse(second).run("hello")
+        } yield {
+          assertTrue(result == "hello")
+        }
       }
       test("return first violation when both fail") {
         val first: Validation[Violation, String, String]  = Validations.minLength(10)
@@ -88,7 +108,11 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
         val first  = Validation.instance[String](s => Right(s))
         val second = Validation.instance[String] { _ => called = true; Right("fallback") }
         val result = first.orElse(second).run("ok")
-        assertTrue(result.is(_.right) == "ok", !called)
+        for {
+          r <- result
+        } yield {
+          assertTrue(r == "ok", !called)
+        }
       }
     }
   }

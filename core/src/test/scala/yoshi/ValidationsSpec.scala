@@ -8,7 +8,11 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("required() can extract from Option") {
       test("success") {
         val validation = Validations.required[String]
-        assertTrue(validation.run(Some("hello")).is(_.right) == "hello")
+        for {
+          result <- validation.run(Some("hello"))
+        } yield {
+          assertTrue(result == "hello")
+        }
       }
       test("failure") {
         val validation = Validations.required[String]
@@ -18,7 +22,11 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("parseInt() can parse string to int") {
       test("success") {
         val validation = Validations.parseInt
-        assertTrue(validation.run("42").is(_.right) == 42)
+        for {
+          result <- validation.run("42")
+        } yield {
+          assertTrue(result == 42)
+        }
       }
       test("failure") {
         val validation = Validations.parseInt
@@ -29,7 +37,12 @@ object ValidationsSpec extends ZIOSpecDefault {
       test("success") {
         val validation = Validations.maxLength(max = 4)
         val value      = "a".repeat(4)
-        assertTrue(validation.run(value).is(_.right) == value)
+
+        for {
+          result <- validation.run(value)
+        } yield {
+          assertTrue(result == value)
+        }
       }
       test("failure") {
         val validation = Validations.maxLength(max = 4)
@@ -41,7 +54,11 @@ object ValidationsSpec extends ZIOSpecDefault {
       test("success") {
         val validation = Validations.minLength(min = 4)
         val value      = "a".repeat(4)
-        assertTrue(validation.run(value).is(_.right) == value)
+        for {
+          result <- validation.run(value)
+        } yield {
+          assertTrue(result == value)
+        }
       }
       test("failure") {
         val validation = Validations.minLength(min = 4)
@@ -52,7 +69,11 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("min() can test minimum value") {
       test("success") {
         val validation = Validations.min(n = 5)
-        assertTrue(validation.run(5).is(_.right) == 5)
+        for {
+          result <- validation.run(5)
+        } yield {
+          assertTrue(result == 5)
+        }
       }
       test("failure") {
         val validation = Validations.min(n = 5)
@@ -62,7 +83,11 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("max() can test maximum value") {
       test("success") {
         val validation = Validations.max(n = 10)
-        assertTrue(validation.run(10).is(_.right) == 10)
+        for {
+          result <- validation.run(10)
+        } yield {
+          assertTrue(result == 10)
+        }
       }
       test("failure") {
         val validation = Validations.max(n = 10)
@@ -72,7 +97,11 @@ object ValidationsSpec extends ZIOSpecDefault {
     suiteAll("positive() can test positive value") {
       test("success") {
         val validation = Validations.positive
-        assertTrue(validation.run(1).is(_.right) == 1)
+        for {
+          result <- validation.run(1)
+        } yield {
+          assertTrue(result == 1)
+        }
       }
       test("failure with zero") {
         val validation = Validations.positive
@@ -88,7 +117,11 @@ object ValidationsSpec extends ZIOSpecDefault {
         val pattern    = "^abc$".r
         val validation = Validations.matches(pattern)
         val value      = "abc"
-        assertTrue(validation.run(value).is(_.right) == value)
+        for {
+          result <- validation.run(value)
+        } yield {
+          assertTrue(result == value)
+        }
       }
       test("failure") {
         val pattern    = "^abc$".r

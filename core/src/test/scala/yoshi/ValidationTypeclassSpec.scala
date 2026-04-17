@@ -11,13 +11,21 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        assertTrue(v.run(Some("hello")).is(_.right) == Some("hello"))
+        for {
+          result <- v.run(Some("hello"))
+        } yield {
+          assertTrue(result == Some("hello"))
+        }
       }
       test("pass through None") {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        assertTrue(v.run(None).is(_.right) == None)
+        for {
+          result <- v.run(None)
+        } yield {
+          assertTrue(result == None)
+        }
       }
       test("fail when Some value is invalid") {
         given Validation[Violation, String, String] = Validations.minLength(5)
@@ -31,13 +39,21 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        assertTrue(v.run(Seq("a", "bb", "ccc")).is(_.right) == Seq("a", "bb", "ccc"))
+        for {
+          result <- v.run(Seq("a", "bb", "ccc"))
+        } yield {
+          assertTrue(result == Seq("a", "bb", "ccc"))
+        }
       }
       test("succeed with empty Seq") {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        assertTrue(v.run(Seq.empty).is(_.right) == Seq.empty)
+        for {
+          result <- v.run(Seq.empty)
+        } yield {
+          assertTrue(result == Seq.empty)
+        }
       }
       test("accumulate violations with indices") {
         given Validation[Violation, String, String] = Validations.minLength(3)
@@ -58,7 +74,11 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
         given Validation[Violation, String, String] = Validations.minLength(1)
         val v                                       = summon[Validation[Violation, List[String], List[String]]]
 
-        assertTrue(v.run(List("a", "bb", "ccc")).is(_.right) == List("a", "bb", "ccc"))
+        for {
+          result <- v.run(List("a", "bb", "ccc"))
+        } yield {
+          assertTrue(result == List("a", "bb", "ccc"))
+        }
       }
       test("accumulate violations with indices") {
         given Validation[Violation, String, String] = Validations.minLength(3)
@@ -83,7 +103,11 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           "b" -> "yy",
         )
 
-        assertTrue(v.run(input).is(_.right) == input)
+        for {
+          result <- v.run(input)
+        } yield {
+          assertTrue(result == input)
+        }
       }
       test("accumulate violations with keys") {
         given Validation[Violation, String, String] = Validations.minLength(3)

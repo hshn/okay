@@ -10,18 +10,30 @@ object NonEmptyListSpec extends ZIOSpecDefault {
   override def spec = suiteAll("NonEmptyList") {
     suiteAll("List → NonEmptyList") {
       test("succeeds with non-empty list") {
-        assertTrue(List(1, 2, 3).validateAs[NonEmptyList[Int]].is(_.right) == NonEmptyList(1, 2, 3))
+        for {
+          result <- List(1, 2, 3).validateAs[NonEmptyList[Int]]
+        } yield {
+          assertTrue(result == NonEmptyList(1, 2, 3))
+        }
       }
       test("fails with Violation.Required on empty list") {
         assertTrue(List.empty[Int].validateAs[NonEmptyList[Int]].is(_.left) == Violations.of(Violation.Required))
       }
       test("succeeds with single element") {
-        assertTrue(List(42).validateAs[NonEmptyList[Int]].is(_.right) == NonEmptyList(42))
+        for {
+          result <- List(42).validateAs[NonEmptyList[Int]]
+        } yield {
+          assertTrue(result == NonEmptyList(42))
+        }
       }
     }
     suiteAll("List → NonEmptyList (element transform)") {
       test("transforms all elements") {
-        assertTrue(List("1", "2", "3").validateAs[NonEmptyList[Int]].is(_.right) == NonEmptyList(1, 2, 3))
+        for {
+          result <- List("1", "2", "3").validateAs[NonEmptyList[Int]]
+        } yield {
+          assertTrue(result == NonEmptyList(1, 2, 3))
+        }
       }
       test("fails at index 0 when head transformation fails") {
         assertTrue(
@@ -38,7 +50,11 @@ object NonEmptyListSpec extends ZIOSpecDefault {
     }
     suiteAll("NonEmptyList element transform") {
       test("transforms all elements") {
-        assertTrue(NonEmptyList("1", "2", "3").validateAs[NonEmptyList[Int]].is(_.right) == NonEmptyList(1, 2, 3))
+        for {
+          result <- NonEmptyList("1", "2", "3").validateAs[NonEmptyList[Int]]
+        } yield {
+          assertTrue(result == NonEmptyList(1, 2, 3))
+        }
       }
       test("fails at the index of the invalid element") {
         assertTrue(

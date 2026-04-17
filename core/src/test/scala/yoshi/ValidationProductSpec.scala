@@ -110,7 +110,11 @@ object ValidationProductSpec extends ZIOSpecDefault {
           ),
         )
 
-        assertTrue(validation.run(valid).is(_.right) == expectedObject)
+        for {
+          result <- validation.run(valid)
+        } yield {
+          assertTrue(result == expectedObject)
+        }
       }
     }
   }
