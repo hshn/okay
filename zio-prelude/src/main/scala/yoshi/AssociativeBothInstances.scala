@@ -1,18 +1,17 @@
 package yoshi
 
-import zio.ZIO
 import zio.prelude.AssociativeBoth
 
 private[yoshi] trait AssociativeBothInstances {
 
-  implicit def violationsAssociativeBoth[R, V]: AssociativeBoth[[X] =>> ZIO[R, Violations[V], X]] =
-    new AssociativeBoth[[X] =>> ZIO[R, Violations[V], X]] {
-      def both[A, B](fa: => ZIO[R, Violations[V], A], fb: => ZIO[R, Violations[V], B]): ZIO[R, Violations[V], (A, B)] =
-        (fa.either zip fb.either).flatMap {
-          case (Right(a), Right(b)) => ZIO.succeed((a, b))
-          case (Left(e1), Left(e2)) => ZIO.fail(e1 ++ e2)
-          case (Left(e), _)         => ZIO.fail(e)
-          case (_, Left(e))         => ZIO.fail(e)
+  implicit def violationsAssociativeBoth[V]: AssociativeBoth[[X] =>> Either[Violations[V], X]] =
+    new AssociativeBoth[[X] =>> Either[Violations[V], X]] {
+      def both[A, B](fa: => Either[Violations[V], A], fb: => Either[Violations[V], B]): Either[Violations[V], (A, B)] =
+        (fa, fb) match {
+          case (Right(a), Right(b)) => Right((a, b))
+          case (Left(e1), Left(e2)) => Left(e1 ++ e2)
+          case (Left(e), _)         => Left(e)
+          case (_, Left(e))         => Left(e)
         }
     }
 }

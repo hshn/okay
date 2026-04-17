@@ -2,8 +2,6 @@ package yoshi
 
 import yoshi.Validation.*
 import yoshi.defaults.*
-import zio.Promise
-import zio.ZIO
 import zio.test.*
 
 object ValidationCombinatorsSpec extends ZIOSpecDefault {
@@ -18,92 +16,103 @@ object ValidationCombinatorsSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- validation.run("ab").either
-        yield assertTrue(result.is(_.left) == expectedViolations)
+        assertTrue(validation.run("ab").is(_.left) == expectedViolations)
       }
       test("result value when valid") {
         val validation = (Validations.minLength(1) |+| Validations.maxLength(2))
           .map(_.length)
 
-        for result <- validation.run("ab")
-        yield assertTrue(result == 2)
+        for {
+          result <- validation.run("ab")
+        } yield {
+          assertTrue(result == 2)
+        }
       }
       test("return left value when both succeed") {
-        val left: Validation[Any, Violation, String, String] =
-          Validation.instance[String](s => ZIO.succeed(s.toUpperCase))
-        val right: Validation[Any, Violation, String, String] =
-          Validation.instance[String](s => ZIO.succeed(s.toLowerCase))
+        val left: Validation[Violation, String, String] =
+          Validation.instance[String](s => Right(s.toUpperCase))
+        val right: Validation[Violation, String, String] =
+          Validation.instance[String](s => Right(s.toLowerCase))
 
-        for result <- (left |+| right).run("Ab")
-        yield assertTrue(result == "AB")
+        for {
+          result <- (left |+| right).run("Ab")
+        } yield {
+          assertTrue(result == "AB")
+        }
       }
     }
     suiteAll(">>") {
       test("chain two validations sequentially") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
-          ZIO.succeed(s.length)
+        val first: Validation[Violation, String, String] = Validations.minLength(1)
+        val second: Validation[Violation, String, Int]   = Validation.instance[String] { s =>
+          Right(s.length)
         }
 
-        for result <- (first >> second).run("hello")
-        yield assertTrue(result == 5)
+        for {
+          result <- (first >> second).run("hello")
+        } yield {
+          assertTrue(result == 5)
+        }
       }
       test("fail on first validation") {
-        val first: Validation[Any, Violation, String, String] = Validations.minLength(10)
-        val second: Validation[Any, Violation, String, Int]   = Validation.instance[String] { s =>
-          ZIO.succeed(s.length)
+        val first: Validation[Violation, String, String] = Validations.minLength(10)
+        val second: Validation[Violation, String, Int]   = Validation.instance[String] { s =>
+          Right(s.length)
         }
 
-        for result <- (first >> second).run("hi").either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("hi", 10)))
+        assertTrue((first >> second).run("hi").is(_.left) == Violations.of(Violation.TooShortString("hi", 10)))
       }
       test("fail on second validation") {
-        val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
-        val second: Validation[Any, Violation, String, String] = Validations.maxLength(2)
+        val first: Validation[Violation, String, String]  = Validations.minLength(1)
+        val second: Validation[Violation, String, String] = Validations.maxLength(2)
 
-        for result <- (first >> second).run("hello").either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooLongString("hello", 2)))
+        assertTrue((first >> second).run("hello").is(_.left) == Violations.of(Violation.TooLongString("hello", 2)))
       }
       test("does not run second validation when first fails") {
-        for
-          called <- Promise.make[Nothing, Unit]
-          first  = Validations.minLength(10)
-          second = Validation.instance[String](_ => called.succeed(()) *> ZIO.succeed(0))
-          _         <- (first >> second).run("hi").either
-          wasCalled <- called.isDone
-        yield assertTrue(!wasCalled)
+        var called = false
+        val first  = Validations.minLength(10)
+        val second = Validation.instance[String] { _ => called = true; Right(0) }
+        val _      = (first >> second).run("hi")
+        assertTrue(!called)
       }
     }
     suiteAll("orElse") {
       test("return first result when first succeeds") {
-        val first: Validation[Any, Violation, String, String]  = Validations.minLength(1)
-        val second: Validation[Any, Violation, String, String] = Validations.minLength(5)
+        val first: Validation[Violation, String, String]  = Validations.minLength(1)
+        val second: Validation[Violation, String, String] = Validations.minLength(5)
 
-        for result <- first.orElse(second).run("ab")
-        yield assertTrue(result == "ab")
+        for {
+          result <- first.orElse(second).run("ab")
+        } yield {
+          assertTrue(result == "ab")
+        }
       }
       test("fall back to second when first fails") {
-        val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
-        val second: Validation[Any, Violation, String, String] = Validations.minLength(1)
+        val first: Validation[Violation, String, String]  = Validations.minLength(10)
+        val second: Validation[Violation, String, String] = Validations.minLength(1)
 
-        for result <- first.orElse(second).run("hello")
-        yield assertTrue(result == "hello")
+        for {
+          result <- first.orElse(second).run("hello")
+        } yield {
+          assertTrue(result == "hello")
+        }
       }
       test("return first violation when both fail") {
-        val first: Validation[Any, Violation, String, String]  = Validations.minLength(10)
-        val second: Validation[Any, Violation, String, String] = Validations.maxLength(1)
+        val first: Validation[Violation, String, String]  = Validations.minLength(10)
+        val second: Validation[Violation, String, String] = Validations.maxLength(1)
 
-        for result <- first.orElse(second).run("hello").either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("hello", 10)))
+        assertTrue(first.orElse(second).run("hello").is(_.left) == Violations.of(Violation.TooShortString("hello", 10)))
       }
       test("does not run second when first succeeds") {
-        for
-          called <- Promise.make[Nothing, Unit]
-          first  = Validation.instance[String](s => ZIO.succeed(s))
-          second = Validation.instance[String](_ => called.succeed(()) *> ZIO.succeed("fallback"))
-          result    <- first.orElse(second).run("ok")
-          wasCalled <- called.isDone
-        yield assertTrue(result == "ok", !wasCalled)
+        var called = false
+        val first  = Validation.instance[String](s => Right(s))
+        val second = Validation.instance[String] { _ => called = true; Right("fallback") }
+        val result = first.orElse(second).run("ok")
+        for {
+          r <- result
+        } yield {
+          assertTrue(r == "ok", !called)
+        }
       }
     }
   }

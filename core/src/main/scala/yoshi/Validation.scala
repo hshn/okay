@@ -1,29 +1,25 @@
 package yoshi
 
 import scala.util.matching.Regex
-import zio.ZIO
 
 /** A composable validation that transforms a value of type `A` into `B`, accumulating violations of type `V` on failure.
   *
-  * Validations can be composed sequentially with `>>` (short-circuit on first failure) or in parallel with `|+|` (accumulate all
-  * violations).
+  * Validations can be composed sequentially with `>>` (short-circuit on first failure) or with `|+|` (accumulate all violations).
   *
   * {{{
-  * val nonEmpty: Validation[Any, String, String, String] =
+  * val nonEmpty: Validation[String, String, String] =
   *   Validation.ensure("must not be empty")(_.nonEmpty)
   *
-  * val maxLen: Validation[Any, String, String, String] =
+  * val maxLen: Validation[String, String, String] =
   *   Validation.ensure("too long")(_.length <= 100)
   *
-  * // Parallel: collects violations from both
+  * // Accumulating: collects violations from both
   * val combined = nonEmpty |+| maxLen
   *
   * // Sequential: short-circuits on first failure
   * val chained = nonEmpty >> maxLen
   * }}}
   *
-  * @tparam R
-  *   ZIO environment required to run this validation
   * @tparam V
   *   violation type produced on failure
   * @tparam A
@@ -31,36 +27,36 @@ import zio.ZIO
   * @tparam B
   *   output type on success (covariant)
   */
-sealed abstract class Validation[-R, +V, -A, +B] { self =>
+sealed abstract class Validation[+V, -A, +B] { self =>
 
   /** Run this validation on the given input.
     *
     * @return
-    *   a ZIO effect that succeeds with `B` or fails with [[Violations]]
+    *   a `Right` with `B` on success, or a `Left` with [[Violations]] on failure
     */
-  def run(a: A): ZIO[R, Violations[V], B]
+  def run(a: A): Either[Violations[V], B]
 
   /** Transform the violation type produced on failure. */
-  def mapError[V1](f: V => V1): Validation[R, V1, A, B] =
+  def mapError[V1](f: V => V1): Validation[V1, A, B] =
     Validation.instance[A] { a =>
-      self.run(a).mapError(_.map(f))
+      self.run(a).left.map(_.map(f))
     }
 
   /** Adapt the input type by applying `f` before validation.
     *
     * {{{
     * case class User(name: String)
-    * val nonEmpty: Validation[Any, String, String, String] = ???
-    * val validateName: Validation[Any, String, User, String] = nonEmpty.contramap(_.name)
+    * val nonEmpty: Validation[String, String, String] = ???
+    * val validateName: Validation[String, User, String] = nonEmpty.contramap(_.name)
     * }}}
     */
-  def contramap[A0](f: A0 => A): Validation[R, V, A0, B] =
+  def contramap[A0](f: A0 => A): Validation[V, A0, B] =
     Validation.instance[A0] { a0 =>
       self.run(f(a0))
     }
 
   /** Transform the output value after a successful validation. */
-  def map[C](f: B => C): Validation[R, V, A, C] =
+  def map[C](f: B => C): Validation[V, A, C] =
     Validation.instance[A] { a =>
       for {
         b <- run(a)
@@ -69,7 +65,7 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
       }
     }
 
-  /** Parallel composition: run both validations on the same input and accumulate all violations.
+  /** Accumulating composition: run both validations on the same input and accumulate all violations.
     *
     * If both validations succeed, the result of `this` is returned.
     *
@@ -78,10 +74,10 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
     * // If input is "" with length 0, both violations are collected
     * }}}
     */
-  def |+|[R1 <: R, V1 >: V, A1 <: A, B1 >: B](next: Validation[R1, V1, A1, B1]): Validation[R1, V1, A1, B1] =
+  def |+|[V1 >: V, A1 <: A, B1 >: B](next: Validation[V1, A1, B1]): Validation[V1, A1, B1] =
     Validation.instance { a =>
-      val lhs: ZIO[R1, Violations[V1], B1] = run(a)
-      val rhs: ZIO[R1, Violations[V1], B1] = next.run(a)
+      val lhs: Either[Violations[V1], B1] = run(a)
+      val rhs: Either[Violations[V1], B1] = next.run(a)
       (lhs, rhs).validateN { case (b1, _) => b1 }
     }
 
@@ -90,12 +86,12 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
     * Short-circuits on the first failure without running `next`.
     *
     * {{{
-    * val parseInt: Validation[Any, String, String, Int] = ???
-    * val positive: Validation[Any, String, Int, Int] = ???
+    * val parseInt: Validation[String, String, Int] = ???
+    * val positive: Validation[String, Int, Int] = ???
     * val positiveInt = parseInt >> positive
     * }}}
     */
-  def >>[C, R1 <: R, V1 >: V](next: Validation[R1, V1, B, C]): Validation[R1, V1, A, C] =
+  def >>[C, V1 >: V](next: Validation[V1, B, C]): Validation[V1, A, C] =
     Validation.instance[A] { a =>
       for {
         b <- run(a)
@@ -110,44 +106,46 @@ sealed abstract class Validation[-R, +V, -A, +B] { self =>
     * If `this` succeeds, its result is returned. If `this` fails, `that` is attempted; if `that` also fails, the violations from `this`
     * (the first attempt) are returned.
     */
-  def orElse[R1 <: R, V1 >: V, A1 <: A, B1 >: B](that: Validation[R1, V1, A1, B1]): Validation[R1, V1, A1, B1] =
+  def orElse[V1 >: V, A1 <: A, B1 >: B](that: Validation[V1, A1, B1]): Validation[V1, A1, B1] =
     Validation.instance[A1] { a =>
-      self.run(a).catchAll { firstError =>
-        that.run(a).mapError(_ => firstError)
+      self.run(a) match {
+        case Right(b)         => Right(b)
+        case Left(firstError) =>
+          that.run(a).left.map(_ => firstError)
       }
     }
 
   /** Lift this validation to handle `Option`: `None` passes through as `None`, `Some(a)` is validated and wrapped back in `Some` on
     * success.
     */
-  def optional: Validation[R, V, Option[A], Option[B]] =
+  def optional: Validation[V, Option[A], Option[B]] =
     Validation.instance[Option[A]] {
       case Some(a) => self.run(a).map(Some(_))
-      case None    => ZIO.succeed(None)
+      case None    => Right(None)
     }
 }
 
 /** Factory methods and given instances for [[Validation]]. */
 object Validation extends ValidationInstances {
 
-  final private class Impl[-R, +V, -A, +B](f: A => ZIO[R, Violations[V], B]) extends Validation[R, V, A, B] {
-    def run(a: A): ZIO[R, Violations[V], B] = f(a)
+  final private class Impl[+V, -A, +B](f: A => Either[Violations[V], B]) extends Validation[V, A, B] {
+    def run(a: A): Either[Violations[V], B] = f(a)
   }
 
-  /** Create a [[Validation]] from a function that returns a ZIO effect.
+  /** Create a [[Validation]] from a function that returns an `Either`.
     *
     * {{{
-    * val positive: Validation[Any, String, Int, Int] =
+    * val positive: Validation[String, Int, Int] =
     *   Validation.instance[Int] { n =>
-    *     if (n > 0) ZIO.succeed(n)
-    *     else ZIO.fail(Violations.of("must be positive"))
+    *     if (n > 0) Right(n)
+    *     else Left(Violations.of("must be positive"))
     *   }
     * }}}
     */
   def instance[A] = new InstancePartiallyApplied[A]
 
   final class InstancePartiallyApplied[A] {
-    def apply[R, V, B](f: A => ZIO[R, Violations[V], B]): Validation[R, V, A, B] = new Impl(f)
+    def apply[V, B](f: A => Either[Violations[V], B]): Validation[V, A, B] = new Impl(f)
   }
 
   /** Create a [[Validation]] from a function that receives a [[ValidationCursor]].
@@ -156,7 +154,7 @@ object Validation extends ValidationInstances {
     * extracted from the accessor lambda at compile time.
     *
     * {{{
-    * val v: Validation[Any, Violation, FormInput, Order] =
+    * val v: Validation[Violation, FormInput, Order] =
     *   Validation.cursor[FormInput] { c =>
     *     (
     *       c.validateAs[String](_.name),   // path "name" derived automatically
@@ -173,17 +171,17 @@ object Validation extends ValidationInstances {
   def cursor[A] = new CursorPartiallyApplied[A]
 
   final class CursorPartiallyApplied[A] {
-    def apply[R, V, B](f: ValidationCursor[A] => ZIO[R, Violations[V], B]): Validation[R, V, A, B] =
+    def apply[V, B](f: ValidationCursor[A] => Either[Violations[V], B]): Validation[V, A, B] =
       new Impl(a => f(new ValidationCursor(a)))
   }
 
   /** A validation that always succeeds, passing the input through unchanged. */
-  def succeed[A]: Validation[Any, Nothing, A, A] =
-    instance[A](a => ZIO.succeed(a))
+  def succeed[A]: Validation[Nothing, A, A] =
+    instance[A](a => Right(a))
 
   /** A validation that always fails with the given violation. */
-  def fail[V](v: V): Validation[Any, V, Any, Nothing] =
-    instance[Any](_ => ZIO.fail(Violations.of(v)))
+  def fail[V](v: V): Validation[V, Any, Nothing] =
+    instance[Any](_ => Left(Violations.of(v)))
 
   /** Validate that a predicate holds, failing with a constant violation if it does not.
     *
@@ -191,15 +189,15 @@ object Validation extends ValidationInstances {
     * val nonEmpty = Validation.ensure("must not be empty")((_: String).nonEmpty)
     * }}}
     */
-  def ensure[V, A](f: => V)(test: A => Boolean): Validation[Any, V, A, A] =
+  def ensure[V, A](f: => V)(test: A => Boolean): Validation[V, A, A] =
     ensureOr[V, A](_ => f)(test)
 
   /** Validate that a predicate holds, computing the violation from the input value. */
-  def ensureOr[V, A](f: A => V)(test: A => Boolean): Validation[Any, V, A, A] = instance[A] { a =>
+  def ensureOr[V, A](f: A => V)(test: A => Boolean): Validation[V, A, A] = instance[A] { a =>
     if (test(a))
-      ZIO.succeed(a)
+      Right(a)
     else
-      ZIO.fail(Violations.of(f(a)))
+      Left(Violations.of(f(a)))
   }
 
   /** Extract a value from `Option`, failing with the given violation if `None`.
@@ -210,24 +208,21 @@ object Validation extends ValidationInstances {
     * req.run(None)     // fails with "field is required"
     * }}}
     */
-  def required[V, A](error: => V): Validation[Any, V, Option[A], A] =
+  def required[V, A](error: => V): Validation[V, Option[A], A] =
     instance[Option[A]] { maybeA =>
-      ZIO.fromEither(maybeA.toRight(Violations.of(error)))
+      maybeA.toRight(Violations.of(error))
     }
 
   /** Parse a `String` to `Int`, failing with a violation produced from the original string on `NumberFormatException`.
     */
-  def parseInt[V](error: String => V): Validation[Any, V, String, Int] =
+  def parseInt[V](error: String => V): Validation[V, String, Int] =
     instance[String] { value =>
-      ZIO
-        .attempt(Integer.parseInt(value))
-        .refineOrDie { case _: NumberFormatException =>
-          Violations.of(error(value))
-        }
+      try Right(Integer.parseInt(value))
+      catch { case _: NumberFormatException => Left(Violations.of(error(value))) }
     }
 
   /** Validate that a string's length does not exceed `max`. */
-  def maxLength[V](max: Int)(error: (String, Int) => V): Validation[Any, V, String, String] =
+  def maxLength[V](max: Int)(error: (String, Int) => V): Validation[V, String, String] =
     ensureOr[V, String] { value =>
       error(value, max)
     } { value =>
@@ -235,7 +230,7 @@ object Validation extends ValidationInstances {
     }
 
   /** Validate that a string's length is at least `min`. */
-  def minLength[V](min: Int)(error: (String, Int) => V): Validation[Any, V, String, String] =
+  def minLength[V](min: Int)(error: (String, Int) => V): Validation[V, String, String] =
     ensureOr[V, String] { value =>
       error(value, min)
     } { value =>
@@ -243,22 +238,22 @@ object Validation extends ValidationInstances {
     }
 
   /** Validate that an integer is greater than or equal to `n`. */
-  def min[V](n: Int)(error: Int => V): Validation[Any, V, Int, Int] =
+  def min[V](n: Int)(error: Int => V): Validation[V, Int, Int] =
     ensureOr[V, Int](error)(_ >= n)
 
   /** Validate that an integer is less than or equal to `n`. */
-  def max[V](n: Int)(error: Int => V): Validation[Any, V, Int, Int] =
+  def max[V](n: Int)(error: Int => V): Validation[V, Int, Int] =
     ensureOr[V, Int](error)(_ <= n)
 
   /** Validate that an integer is strictly positive (greater than zero). */
-  def positive[V](error: Int => V): Validation[Any, V, Int, Int] =
+  def positive[V](error: Int => V): Validation[V, Int, Int] =
     ensureOr[V, Int](error)(_ > 0)
 
   /** Validate that a string matches the given regex pattern. */
-  def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[Any, V, String, String] =
+  def matches[V](pattern: Regex)(error: (String, Regex) => V): Validation[V, String, String] =
     instance[String] { value =>
-      if (pattern.matches(value)) ZIO.succeed(value)
-      else ZIO.fail(Violations.of(error(value, pattern)))
+      if (pattern.matches(value)) Right(value)
+      else Left(Violations.of(error(value, pattern)))
     }
 
 }

@@ -27,7 +27,6 @@ lazy val root = (project in file(".") withId "yoshi")
 lazy val core = (project in file("core"))
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio"               % zio,
       "dev.zio" %% "zio-test"          % zio % Test,
       "dev.zio" %% "zio-test-sbt"      % zio % Test,
       "dev.zio" %% "zio-test-magnolia" % zio % Test,

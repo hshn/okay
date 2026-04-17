@@ -3,11 +3,10 @@ package yoshi
 import yoshi.Validation.*
 import yoshi.Violations.Path
 import yoshi.defaults.*
-import zio.Promise
 import zio.test.*
 
 object ValidationProductSpec extends ZIOSpecDefault {
-  given childValidation: Validation[Any, Violation, Dirty.Child, Clean.Child] =
+  given childValidation: Validation[Violation, Dirty.Child, Clean.Child] =
     Validation.instance[Dirty.Child] { dirty =>
       (
         dirty.name.validateAs[String].at("name")
@@ -16,7 +15,7 @@ object ValidationProductSpec extends ZIOSpecDefault {
       }
     }
 
-  val validation: Validation[Any, Violation, Dirty, Clean] =
+  val validation: Validation[Violation, Dirty, Clean] =
     Validation.instance[Dirty] { dirty =>
       (
         dirty.a1.validateAs[String].at("a1"),
@@ -78,8 +77,7 @@ object ValidationProductSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- validation.run(invalid).either
-        yield assertTrue(result.is(_.left) == expectedViolations)
+        assertTrue(validation.run(invalid).is(_.left) == expectedViolations)
       }
       test("result transformed object when valid") {
         val valid = Dirty(
@@ -112,18 +110,11 @@ object ValidationProductSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- validation.run(valid)
-        yield assertTrue(result == expectedObject)
-      }
-    }
-    suiteAll("parallelism") {
-      test("validateN runs validations in parallel") {
-        for
-          gate <- Promise.make[Nothing, Unit]
-          v1 = Validation.instance[Unit](_ => gate.await.as("v1"))
-          v2 = Validation.instance[Unit](_ => gate.succeed(()).as("v2"))
-          result <- (v1.run(()), v2.run(())).validateN { case (a, b) => (a, b) }
-        yield assertTrue(result == ("v1", "v2"))
+        for {
+          result <- validation.run(valid)
+        } yield {
+          assertTrue(result == expectedObject)
+        }
       }
     }
   }

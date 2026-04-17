@@ -8,45 +8,56 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
   override def spec = suiteAll("Validation typeclass instances") {
     suiteAll("optionCanBeValidatedAs") {
       test("derive Option validation from given") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        for result <- v.run(Some("hello"))
-        yield assertTrue(result == Some("hello"))
+        for {
+          result <- v.run(Some("hello"))
+        } yield {
+          assertTrue(result == Some("hello"))
+        }
       }
       test("pass through None") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        for result <- v.run(None)
-        yield assertTrue(result == None)
+        for {
+          result <- v.run(None)
+        } yield {
+          assertTrue(result == None)
+        }
       }
       test("fail when Some value is invalid") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(5)
-        val v                                            = summon[Validation[Any, Violation, Option[String], Option[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(5)
+        val v                                       = summon[Validation[Violation, Option[String], Option[String]]]
 
-        for result <- v.run(Some("ab")).either
-        yield assertTrue(result.is(_.left) == Violations.of(Violation.TooShortString("ab", 5)))
+        assertTrue(v.run(Some("ab")).is(_.left) == Violations.of(Violation.TooShortString("ab", 5)))
       }
     }
     suiteAll("seqCanBeValidatedAs") {
       test("validate all elements in Seq") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        for result <- v.run(Seq("a", "bb", "ccc"))
-        yield assertTrue(result == Seq("a", "bb", "ccc"))
+        for {
+          result <- v.run(Seq("a", "bb", "ccc"))
+        } yield {
+          assertTrue(result == Seq("a", "bb", "ccc"))
+        }
       }
       test("succeed with empty Seq") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
-        for result <- v.run(Seq.empty)
-        yield assertTrue(result == Seq.empty)
+        for {
+          result <- v.run(Seq.empty)
+        } yield {
+          assertTrue(result == Seq.empty)
+        }
       }
       test("accumulate violations with indices") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(3)
-        val v                                            = summon[Validation[Any, Violation, Seq[String], Seq[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(3)
+        val v                                       = summon[Validation[Violation, Seq[String], Seq[String]]]
 
         val expectedViolations = Violations[Violation](
           children = Map(
@@ -55,21 +66,23 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- v.run(Seq("ab", "hello", "x")).either
-        yield assertTrue(result.is(_.left) == expectedViolations)
+        assertTrue(v.run(Seq("ab", "hello", "x")).is(_.left) == expectedViolations)
       }
     }
     suiteAll("listCanBeValidatedAs") {
       test("validate all elements in List") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, List[String], List[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, List[String], List[String]]]
 
-        for result <- v.run(List("a", "bb", "ccc"))
-        yield assertTrue(result == List("a", "bb", "ccc"))
+        for {
+          result <- v.run(List("a", "bb", "ccc"))
+        } yield {
+          assertTrue(result == List("a", "bb", "ccc"))
+        }
       }
       test("accumulate violations with indices") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(3)
-        val v                                            = summon[Validation[Any, Violation, List[String], List[String]]]
+        given Validation[Violation, String, String] = Validations.minLength(3)
+        val v                                       = summon[Validation[Violation, List[String], List[String]]]
 
         val expectedViolations = Violations[Violation](
           children = Map(
@@ -78,25 +91,27 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- v.run(List("ab", "hello", "x")).either
-        yield assertTrue(result.is(_.left) == expectedViolations)
+        assertTrue(v.run(List("ab", "hello", "x")).is(_.left) == expectedViolations)
       }
     }
     suiteAll("mapCanBeValidatedAs") {
       test("validate all values in Map") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(1)
-        val v                                            = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
-        val input                                        = Map(
+        given Validation[Violation, String, String] = Validations.minLength(1)
+        val v                                       = summon[Validation[Violation, Map[String, String], Map[String, String]]]
+        val input                                   = Map(
           "a" -> "x",
           "b" -> "yy",
         )
 
-        for result <- v.run(input)
-        yield assertTrue(result == input)
+        for {
+          result <- v.run(input)
+        } yield {
+          assertTrue(result == input)
+        }
       }
       test("accumulate violations with keys") {
-        given Validation[Any, Violation, String, String] = Validations.minLength(3)
-        val v                                            = summon[Validation[Any, Violation, Map[String, String], Map[String, String]]]
+        given Validation[Violation, String, String] = Validations.minLength(3)
+        val v                                       = summon[Validation[Violation, Map[String, String], Map[String, String]]]
 
         val expectedViolations = Violations[Violation](
           children = Map(
@@ -105,8 +120,7 @@ object ValidationTypeclassSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- v.run(Map("a" -> "ab", "b" -> "hello", "c" -> "x")).either
-        yield assertTrue(result.is(_.left) == expectedViolations)
+        assertTrue(v.run(Map("a" -> "ab", "b" -> "hello", "c" -> "x")).is(_.left) == expectedViolations)
       }
     }
   }

@@ -25,7 +25,7 @@ object CursorSpec extends ZIOSpecDefault {
   object Output:
     case class Item(label: String)
 
-  given Validation[Any, Violation, Input.Item, Output.Item] =
+  given Validation[Violation, Input.Item, Output.Item] =
     Validation.cursor[Input.Item] { c =>
       (
         c.field(_.label).validateAs[String]
@@ -34,7 +34,7 @@ object CursorSpec extends ZIOSpecDefault {
       }
     }
 
-  val validation: Validation[Any, Violation, Input, Output] =
+  val validation: Validation[Violation, Input, Output] =
     Validation.cursor[Input] { c =>
       (
         c.field(_.name).validateAs[String],
@@ -60,8 +60,11 @@ object CursorSpec extends ZIOSpecDefault {
           items = List(Output.Item("item1"), Output.Item("item2")),
         )
 
-        for result <- validation.run(input)
-        yield assertTrue(result == expected)
+        for {
+          result <- validation.run(input)
+        } yield {
+          assertTrue(result == expected)
+        }
       }
 
       test("accumulates violations with correct paths") {
@@ -84,12 +87,11 @@ object CursorSpec extends ZIOSpecDefault {
           ),
         )
 
-        for result <- validation.run(input).either
-        yield assertTrue(result == Left(expected))
+        assertTrue(validation.run(input).is(_.left) == expected)
       }
 
       test("produces same result as manual .at() calls") {
-        val manualValidation: Validation[Any, Violation, Input, Output] =
+        val manualValidation: Validation[Violation, Input, Output] =
           Validation.instance[Input] { dirty =>
             (
               dirty.name.validateAs[String].at("name"),
@@ -102,75 +104,67 @@ object CursorSpec extends ZIOSpecDefault {
 
         val invalid = Input(name = None, age = "xyz", items = List(Input.Item(None)), address = Input.Address(None))
 
-        for
-          cursorResult <- validation.run(invalid).either
-          manualResult <- manualValidation.run(invalid).either
-        yield assertTrue(cursorResult == manualResult)
+        val cursorResult = validation.run(invalid)
+        val manualResult = manualValidation.run(invalid)
+        assertTrue(cursorResult == manualResult)
       }
     }
 
     suiteAll("nested field access") {
       test("derives full path from nested accessor") {
-        val v: Validation[Any, Violation, Input, String] =
+        val v: Validation[Violation, Input, String] =
           Validation.cursor[Input] { c =>
             c.field(_.address.zip).validateAs[String]
           }
 
         val input = Input(name = None, age = "", items = Nil, address = Input.Address(None))
 
-        for result <- v.run(input).either
-        yield {
-          val expected = Violations[Violation](
-            children = Map(
-              Violations.Path("address") -> Violations(
-                children = Map(
-                  Violations.Path("zip") -> Violations(Vector(Violation.Required)),
-                ),
+        val expected = Violations[Violation](
+          children = Map(
+            Violations.Path("address") -> Violations(
+              children = Map(
+                Violations.Path("zip") -> Violations(Vector(Violation.Required)),
               ),
             ),
-          )
-          assertTrue(result == Left(expected))
-        }
+          ),
+        )
+        assertTrue(v.run(input).is(_.left) == expected)
       }
     }
 
     suiteAll("field with .at() override") {
       test("uses overridden path instead of derived name") {
-        val v: Validation[Any, Violation, Input, String] =
+        val v: Validation[Violation, Input, String] =
           Validation.cursor[Input] { c =>
             c.field(_.name).at("display_name").validateAs[String]
           }
 
-        for result <- v.run(Input(name = None, age = "", items = Nil, address = Input.Address(None))).either
-        yield {
-          val expected = Violations[Violation](
-            children = Map(
-              Violations.Path("display_name") -> Violations(Vector(Violation.Required)),
-            ),
-          )
-          assertTrue(result == Left(expected))
-        }
+        val expected = Violations[Violation](
+          children = Map(
+            Violations.Path("display_name") -> Violations(Vector(Violation.Required)),
+          ),
+        )
+        assertTrue(v.run(Input(name = None, age = "", items = Nil, address = Input.Address(None))).is(_.left) == expected)
       }
     }
 
     suiteAll("validateAs shorthand") {
       test("produces same result as field().validateAs") {
-        val withField: Validation[Any, Violation, Input, String] =
+        val withField: Validation[Violation, Input, String] =
           Validation.cursor[Input] { c =>
             c.field(_.name).validateAs[String]
           }
 
-        val withShorthand: Validation[Any, Violation, Input, String] =
+        val withShorthand: Validation[Violation, Input, String] =
           Validation.cursor[Input] { c =>
             c.validateAs[String](_.name)
           }
 
         val invalid = Input(name = None, age = "", items = Nil, address = Input.Address(None))
 
-        for
-          fieldResult     <- withField.run(invalid).either
-          shorthandResult <- withShorthand.run(invalid).either
-        yield assertTrue(fieldResult == shorthandResult)
+        val fieldResult     = withField.run(invalid)
+        val shorthandResult = withShorthand.run(invalid)
+        assertTrue(fieldResult == shorthandResult)
       }
     }
   }

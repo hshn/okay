@@ -18,17 +18,11 @@ libraryDependencies += "io.github.hshn" %% "yoshi-core" % "@VERSION@"
 ## The idea
 
 Most validation libraries give you `Validated[E, A]` — a value that's either valid or not.
-Yoshi gives you `Validation[R, V, A, B]` — a **composable function** from `A` to `B` that accumulates violations on failure.
+Yoshi gives you `Validation[V, A, B]` — a **composable function** from `A` to `B` that accumulates violations on failure.
 
 ```scala mdoc:invisible
 import yoshi.*
 import yoshi.defaults.*
-import zio.*
-
-def runUnsafe[V, A, B](v: ZIO[Any, Violations[V], B]): Either[Violations[V], B] =
-  Unsafe.unsafe { implicit unsafe =>
-    Runtime.default.unsafe.run(v.either).getOrThrow()
-  }
 ```
 
 ```scala mdoc:silent
@@ -52,7 +46,7 @@ object Order:
 ```
 
 ```scala mdoc:silent
-given Validation[Any, Violation, FormInput.Item, Order.Item] =
+given Validation[Violation, FormInput.Item, Order.Item] =
   Validation.cursor[FormInput.Item] { c =>
     (
       c.validateAs[String](_.label)
@@ -61,7 +55,7 @@ given Validation[Any, Violation, FormInput.Item, Order.Item] =
     }
   }
 
-val validation: Validation[Any, Violation, FormInput, Order] =
+val validation: Validation[Violation, FormInput, Order] =
   Validation.cursor[FormInput] { c =>
     (
       c.validateAs[String](_.name),
@@ -78,7 +72,7 @@ The cursor derives field names from accessor lambdas at compile time — no manu
 When the path should differ from the field name, use `field()` with `.at()` to override:
 
 ```scala mdoc:silent
-val renamed: Validation[Any, Violation, FormInput, Order] =
+val renamed: Validation[Violation, FormInput, Order] =
   Validation.cursor[FormInput] { c =>
     (
       c.field(_.name).at("display_name").validateAs[String],
@@ -106,7 +100,7 @@ val invalid = FormInput(
 ```
 
 ```scala mdoc
-runUnsafe(validation.run(invalid)).left.map(_.toList)
+validation.run(invalid).left.map(_.toList)
 ```
 
 ## Automatic container derivation
@@ -118,24 +112,24 @@ import yoshi.*
 import yoshi.defaults.*
 
 // Given this exists:
-// given Validation[Any, Violation, String, Int]  (from yoshi.defaults)
+// given Validation[Violation, String, Int]  (from yoshi.defaults)
 
 // These are derived for free:
-summon[Validation[Any, Violation, Option[String], Option[Int]]]
-summon[Validation[Any, Violation, List[String], List[Int]]]
-summon[Validation[Any, Violation, Map[String, String], Map[String, Int]]]
+summon[Validation[Violation, Option[String], Option[Int]]]
+summon[Validation[Violation, List[String], List[Int]]]
+summon[Validation[Violation, Map[String, String], Map[String, Int]]]
 ```
 
 ## Composing validators
 
 ```scala mdoc:silent
-val nonEmpty: Validation[Any, String, String, String] =
+val nonEmpty: Validation[String, String, String] =
   Validation.ensure("required")((_: String).nonEmpty)
 
-val maxLen: Validation[Any, String, String, String] =
+val maxLen: Validation[String, String, String] =
   Validation.maxLength(100)((_, _) => "too long")
 
-// Parallel — accumulates all violations
+// Accumulating — collects all violations
 val both = nonEmpty |+| maxLen
 
 // Sequential — short-circuits on first failure

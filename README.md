@@ -6,7 +6,7 @@ A validation library for Scala 3 that transforms untyped input into domain types
 import yoshi.*
 import yoshi.defaults.*
 
-val validation: Validation[Any, Violation, FormInput, Order] =
+val validation: Validation[Violation, FormInput, Order] =
   Validation.cursor[FormInput] { c =>
     (
       c.validateAs[String](_.name),
