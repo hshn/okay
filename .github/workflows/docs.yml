@@ -18,20 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: jetify-com/devbox-install-action@v0.14.0
         with:
-          distribution: temurin
-          java-version: "21"
-          cache: sbt
-      - uses: sbt/setup-sbt@v1
-      - uses: actions/setup-node@v6
+          enable-cache: true
+      - uses: actions/cache@v4
         with:
-          node-version: "24"
-          cache: yarn
-          cache-dependency-path: website/yarn.lock
-      - run: cd website && yarn install --frozen-lockfile
-      - run: sbt docs/mdoc
-      - run: cd website && yarn build
+          path: |
+            ~/.cache/coursier
+            ~/.sbt
+          key: sbt-docs-${{ hashFiles('build.sbt', 'project/**') }}
+      - run: devbox run -- pnpm install --frozen-lockfile --dir website
+      - run: devbox run -- sbt docs/mdoc
+      - run: devbox run -- pnpm run --dir website build
       - uses: actions/upload-pages-artifact@v4
         with:
           path: website/build
