@@ -155,6 +155,29 @@ object ViolationsSpec extends ZIOSpecDefault {
           result.length == 3,
         )
       }
+      test("children are flattened in a deterministic path order") {
+        val violations = Violations[String](
+          children = Map(
+            Path.Index(10)    -> Violations(values = Vector("index-10")),
+            Path.Key("zeta")  -> Violations(values = Vector("zeta")),
+            Path.Index(2)     -> Violations(values = Vector("index-2")),
+            Path.Key("alpha") -> Violations(
+              children = Map(
+                Path.Key("beta") -> Violations(values = Vector("alpha.beta")),
+              ),
+            ),
+          ),
+        )
+
+        assertTrue(
+          violations.toList == List(
+            (Paths(List(Path.Key("alpha"), Path.Key("beta"))), "alpha.beta"),
+            (Paths(List(Path.Key("zeta"))), "zeta"),
+            (Paths(List(Path.Index(2))), "index-2"),
+            (Paths(List(Path.Index(10))), "index-10"),
+          ),
+        )
+      }
     }
     suiteAll("Paths#toString") {
       test("empty paths") {

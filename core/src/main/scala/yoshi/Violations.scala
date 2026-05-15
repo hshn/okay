@@ -69,7 +69,7 @@ case class Violations[+V](
     */
   def toList: List[(Paths, V)] =
     values.iterator.map(v => (Paths.empty, v)).toList ++
-      children.iterator.flatMap { case (path, child) =>
+      children.toList.sorted(using Ordering.by(_._1)).flatMap { case (path, child) =>
         child.toList.map { case (paths, v) => (Paths(path :: paths.segments), v) }
       }
 
@@ -106,6 +106,14 @@ object Violations {
     def apply(value: String): Path = Path.Key(value)
     def apply(value: Int): Path    = Path.Index(value)
 
+    given Ordering[Path] with
+      def compare(x: Path, y: Path): Int =
+        (x, y) match
+          case (Path.Key(left), Path.Key(right))     => left.compareTo(right)
+          case (Path.Index(left), Path.Index(right)) => left.compare(right)
+          case (Path.Key(_), Path.Index(_))          => -1
+          case (Path.Index(_), Path.Key(_))          => 1
+
   /** A full path from the root to a violation, composed of [[Path]] segments.
     *
     * `toString` produces a human-readable dot-notation:
@@ -127,4 +135,19 @@ object Violations {
 
   object Paths:
     val empty: Paths = Paths(Nil)
+
+    given Ordering[Paths] with
+      def compare(x: Paths, y: Paths): Int =
+        compareSegments(x.segments, y.segments)
+
+      @annotation.tailrec
+      private def compareSegments(left: List[Path], right: List[Path]): Int =
+        (left, right) match
+          case (Nil, Nil)                                     => 0
+          case (Nil, _ :: _)                                  => -1
+          case (_ :: _, Nil)                                  => 1
+          case (leftHead :: leftTail, rightHead :: rightTail) =>
+            val segmentComparison = summon[Ordering[Path]].compare(leftHead, rightHead)
+            if segmentComparison == 0 then compareSegments(leftTail, rightTail)
+            else segmentComparison
 }
